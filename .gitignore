@@ -1,0 +1,28 @@
+# 依赖
+node_modules/
+.pnp
+.pnp.js
+
+# 运行时环境文件
+.env
+.env.local
+.env.*.local
+
+# IDE
+.idea/
+*.swp
+*.swo
+.vscode/
+
+# PDF 文件（不包含源码）
+*.pdf
+# 提取的文本文件
+pdf_extracted_text.txt
+pdf_text.txt
+
+# 依赖锁定文件（前端静态页面不需要）
+package-lock.json
+
+# 系统文件
+.DS_Store
+Thumbs.db

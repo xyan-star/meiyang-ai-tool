@@ -1,0 +1,2071 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>美羊AI解析助手 - 学习力综合测评分析</title>
+    <!-- Element Plus CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/element-plus/dist/index.css">
+    <!-- ECharts -->
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+    <!-- PDF.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <!-- Element Plus JS -->
+    <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+    <script src="https://unpkg.com/element-plus/dist/index.full.min.js"></script>
+
+    <style>
+        :root {
+            --dark-header: #304156;
+            --primary: #409EFF;
+            --success: #67c23a;
+            --warning: #e6a23c;
+            --danger: #f56c6c;
+            --bg: #f0f2f5;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Helvetica Neue', Helvetica, 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', Arial, sans-serif;
+            background: var(--bg);
+            min-height: 100vh;
+        }
+
+        /* 顶栏 */
+        .app-header {
+            background: var(--dark-header);
+            color: #fff;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            padding: 0 24px;
+            box-shadow: 0 2px 8px rgba(0,0,0,.15);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+        .app-header .logo-area {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .app-header .logo-img {
+            height: 40px;
+            width: auto;
+            object-fit: contain;
+        }
+
+
+
+        /* 主体 */
+        .app-main {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 24px;
+        }
+
+        /* 卡片 */
+        .card {
+            background: #fff;
+            border-radius: 8px;
+            padding: 24px;
+            margin-bottom: 20px;
+            box-shadow: 0 1px 4px rgba(0,0,0,.08);
+        }
+        .card-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #303133;
+            margin-bottom: 16px;
+            padding-bottom: 12px;
+            border-bottom: 2px solid var(--primary);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .card-title::before {
+            content: '';
+            display: inline-block;
+            width: 4px;
+            height: 18px;
+            background: var(--primary);
+            border-radius: 2px;
+        }
+
+        /* 上传区 */
+        .upload-section {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+        .upload-box {
+            width: 100%;
+            max-width: 480px;
+            margin: 0 auto;
+            border: 2px dashed #d9d9d9;
+            border-radius: 8px;
+            padding: 32px 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all .3s;
+            background: #fafafa;
+        }
+        .upload-box:hover {
+            border-color: var(--primary);
+            background: #ecf5ff;
+        }
+        .upload-box.has-file {
+            border-color: var(--success);
+            background: #f0f9eb;
+            border-style: solid;
+        }
+        .upload-box .icon {
+            font-size: 40px;
+            color: #c0c4cc;
+            margin-bottom: 12px;
+        }
+        .upload-box:hover .icon { color: var(--primary); }
+        .upload-box.has-file .icon { color: var(--success); }
+        .upload-box .text {
+            font-size: 14px;
+            color: #909399;
+        }
+        .upload-box .file-name {
+            font-size: 13px;
+            color: var(--success);
+            margin-top: 8px;
+            font-weight: 500;
+        }
+
+        /* 概览统计 */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px,1fr));
+            gap: 16px;
+        }
+        .stat-card {
+            background: linear-gradient(135deg, #f5f7fa 0%, #fff 100%);
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+            border: 1px solid #ebeef5;
+        }
+        .stat-card.clickable {
+            cursor: pointer;
+            transition: all 0.25s ease;
+        }
+        .stat-card.clickable:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,.1);
+            border-color: #c0c4cc;
+        }
+
+        /* 综合总结 */
+        .summary-card {
+            background: linear-gradient(135deg, #f0f5ff 0%, #f6ffed 100%);
+            border-radius: 8px;
+            padding: 24px 28px;
+            border: 1px solid #d9ecff;
+            line-height: 1.9;
+            font-size: 15px;
+            color: #303133;
+        }
+        .summary-card .summary-title {
+            font-size: 16px;
+            font-weight: 700;
+            color: #409EFF;
+            margin-bottom: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .summary-card .summary-title:before {
+            content: '';
+            display: inline-block;
+            width: 4px;
+            height: 18px;
+            background: linear-gradient(180deg, #409EFF, #67c23a);
+            border-radius: 2px;
+        }
+
+        /* 返回顶部 */
+        .back-to-top {
+            position: fixed;
+            bottom: 48px;
+            right: 36px;
+            width: 44px;
+            height: 44px;
+            background: var(--primary);
+            color: #fff;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 2px 12px rgba(64,158,255,.35);
+            transition: all .3s ease;
+            z-index: 999;
+            font-size: 22px;
+            opacity: 0;
+            transform: translateY(20px);
+            pointer-events: none;
+        }
+        .back-to-top.visible {
+            opacity: 1;
+            transform: translateY(0);
+            pointer-events: auto;
+        }
+        .back-to-top:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 4px 18px rgba(64,158,255,.5);
+            background: #3a8ee6;
+        }
+        .stat-card .num {
+            font-size: 36px;
+            font-weight: 700;
+            line-height: 1.2;
+        }
+        .stat-card .label {
+            font-size: 13px;
+            color: #909399;
+            margin-top: 4px;
+        }
+        .stat-card.danger .num { color: var(--danger); }
+        .stat-card.warning .num { color: var(--warning); }
+        .stat-card.success .num { color: var(--success); }
+        .stat-card.primary .num { color: var(--primary); }
+
+        /* 维度标签 */
+        .tag-urgent {
+            background: #fef0f0;
+            color: #f56c6c;
+            border: 1px solid #fbc4c4;
+            padding: 2px 10px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .tag-improve {
+            background: #fdf6ec;
+            color: #e6a23c;
+            border: 1px solid #f5dab1;
+            padding: 2px 10px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .tag-good {
+            background: #f0f9eb;
+            color: #67c23a;
+            border: 1px solid #c2e7b0;
+            padding: 2px 10px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        /* 维度表格 */
+        .dim-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+        }
+        .dim-table th {
+            background: #f5f7fa;
+            color: #303133;
+            font-weight: 600;
+            padding: 10px 12px;
+            text-align: left;
+            border-bottom: 2px solid #ebeef5;
+            white-space: nowrap;
+        }
+        .dim-table th.sortable {
+            cursor: pointer;
+            user-select: none;
+            transition: color 0.2s;
+        }
+        .dim-table th.sortable:hover {
+            color: #6366F1;
+        }
+        .dim-table td {
+            padding: 10px 12px;
+            border-bottom: 1px solid #ebeef5;
+        }
+        .dim-table tr:hover { background: #f5f7fa; }
+        .dim-table .score-bar {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .dim-table .bar-bg {
+            flex: 1;
+            height: 8px;
+            background: #ebeef5;
+            border-radius: 4px;
+            overflow: hidden;
+            min-width: 60px;
+        }
+        .dim-table .bar-fill {
+            height: 100%;
+            border-radius: 4px;
+            transition: width .6s ease;
+        }
+        .dim-table .bar-fill.urgent { background: var(--danger); }
+        .dim-table .bar-fill.improve { background: var(--warning); }
+        .dim-table .bar-fill.good { background: var(--success); }
+
+        /* 图表区 */
+        .charts-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        .chart-box {
+            background: #fff;
+            border-radius: 8px;
+            padding: 16px;
+            box-shadow: 0 1px 4px rgba(0,0,0,.08);
+            animation: chartSlideIn 0.6s ease both;
+        }
+        @keyframes chartSlideIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .chart-box.full { grid-column: 1 / -1; }
+        .chart-box .chart-inner {
+            width: 100%;
+            height: 420px;
+        }
+        .chart-box .chart-inner.tall { height: 500px; }
+
+        /* 建议卡片 */
+        .advice-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(360px,1fr));
+            gap: 14px;
+        }
+        .advice-card {
+            border-radius: 8px;
+            padding: 16px 18px;
+            border-left: 4px solid;
+        }
+        .advice-card.urgent { border-left-color: var(--danger); background: #fef0f0; }
+        .advice-card.improve { border-left-color: var(--warning); background: #fdf6ec; }
+        .advice-card.good { border-left-color: var(--success); background: #f0f9eb; }
+
+        .advice-card .advice-title-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+        .advice-card .advice-dim {
+            font-size: 15px;
+            font-weight: 700;
+            color: #303133;
+        }
+        .advice-card .advice-parent {
+            font-size: 11px;
+            color: #909399;
+            margin-left: 6px;
+        }
+
+        .advice-card .advice-badge {
+            font-size: 11px;
+            padding: 2px 10px;
+            border-radius: 10px;
+            font-weight: 500;
+        }
+        .advice-card .advice-badge.urgent { background: #fbc4c4; color: #f56c6c; }
+        .advice-card .advice-badge.improve { background: #f5dab1; color: #e6a23c; }
+        .advice-card .advice-badge.good { background: #c2e7b0; color: #67c23a; }
+
+        .advice-card .advice-text {
+            font-size: 13px;
+            color: #606266;
+            line-height: 1.8;
+            white-space: pre-line;
+        }
+
+        /* 响应式 */
+        @media (max-width: 768px) {
+            .charts-grid { grid-template-columns: 1fr; }
+            .upload-section { flex-direction: column; }
+            .advice-list { grid-template-columns: 1fr; }
+            .stats-grid { grid-template-columns: 1fr 1fr; }
+        }
+
+        /* 加载状态 */
+        .loading-mask {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 32px 24px;
+        }
+        .ai-loading {
+            max-width: 600px;
+            width: 100%;
+        }
+        .ai-loading-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 16px;
+        }
+        .ai-icon {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #3b82f6, #6366f1, #06b6d4);
+            background-size: 200% 200%;
+            animation: ai-pulse 1.5s ease-in-out infinite, ai-gradient-shift 3s ease infinite;
+        }
+        @keyframes ai-gradient-shift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+        @keyframes ai-pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.6; transform: scale(1.15); }
+        }
+        .ai-title {
+            font-size: 16px;
+            font-weight: 700;
+            color: #303133;
+            background: linear-gradient(90deg, #409EFF, #67c23a);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .ai-progress-bar {
+            height: 8px;
+            background: #ebeef5;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-bottom: 18px;
+        }
+        .ai-progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #409EFF, #67c23a);
+            border-radius: 3px;
+            transition: width 0.6s ease;
+        }
+        .ai-steps {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .ai-step {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 13px;
+            color: #c0c4cc;
+            transition: color .3s;
+        }
+        .ai-step.active {
+            color: #409EFF;
+            font-weight: 600;
+        }
+        .ai-step.done {
+            color: #67c23a;
+        }
+        .ai-step-dot {
+            font-size: 10px;
+            width: 22px;
+            text-align: center;
+            flex-shrink: 0;
+        }
+        .ai-step.done .ai-step-dot {
+            color: #67c23a;
+        }
+        .ai-step-dot.spinning {
+            display: inline-block;
+            color: #6366F1;
+            animation: ai-spin 1s linear infinite;
+        }
+        @keyframes ai-spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        .hidden { display: none !important; }
+
+        /* 操作按钮区 */
+        .action-bar {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            border: none;
+            transition: all .3s;
+            text-decoration: none;
+        }
+        .btn-primary {
+            background: var(--primary);
+            color: #fff;
+        }
+        .btn-primary:hover { background: #337ecc; }
+        .btn-outline {
+            background: #fff;
+            color: var(--primary);
+            border: 1px solid var(--primary);
+        }
+        .btn-outline:hover { background: #ecf5ff; }
+        .btn-default {
+            background: #fff;
+            color: #606266;
+            border: 1px solid #dcdfe6;
+        }
+        .btn-default:hover { color: var(--primary); border-color: var(--primary); }
+
+        /* 应用介绍 */
+        .intro-section {
+            text-align: center;
+            padding: 48px 24px;
+        }
+        .intro-section .intro-icon {
+            font-size: 56px;
+            margin-bottom: 16px;
+        }
+        .intro-section h2 {
+            font-size: 26px;
+            color: #303133;
+            margin-bottom: 8px;
+        }
+        .intro-section .desc {
+            font-size: 15px;
+            color: #909399;
+            max-width: 600px;
+            margin: 0 auto 24px;
+            line-height: 1.7;
+        }
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px,1fr));
+            gap: 16px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .feature-item {
+            background: #fff;
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 1px 4px rgba(0,0,0,.06);
+        }
+        .feature-item .feat-icon { font-size: 28px; margin-bottom: 8px; }
+        .feature-item .feat-title { font-size: 14px; font-weight: 600; color: #303133; }
+        .feature-item .feat-desc { font-size: 12px; color: #909399; margin-top: 4px; }
+
+        .student-info {
+            display: flex;
+            gap: 24px;
+            flex-wrap: wrap;
+            padding: 12px 0;
+            font-size: 14px;
+            color: #606266;
+        }
+        .student-info .info-item {
+            display: flex;
+            gap: 6px;
+        }
+        .student-info .info-label { color: #909399; }
+        .student-info .info-val { font-weight: 600; color: #303133; }
+
+        /* 筛选选项卡 */
+        .filter-tabs {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+        }
+        .filter-tab {
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: 13px;
+            cursor: pointer;
+            border: 1px solid #dcdfe6;
+            background: #fff;
+            color: #606266;
+            transition: all .3s;
+        }
+        .filter-tab:hover { color: var(--primary); border-color: var(--primary); }
+        .filter-tab.active {
+            background: var(--primary);
+            color: #fff;
+            border-color: var(--primary);
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <!-- 顶部导航 -->
+        <header class="app-header">
+            <div class="logo-area">
+                <img class="logo-img" src="logo.png" alt="美羊AI">
+            </div>
+        </header>
+
+        <main class="app-main">
+            <!-- 上传区域 -->
+            <div class="card" id="uploadCard">
+                <div class="card-title">美羊学习力报告AI辅助解读工具</div>
+                <p style="color:#909399;font-size:13px;margin-bottom:16px;">请上传学生学习力综合测评报告，暂不支持其他类型报告解析。分析内容由AI生成，仅供参考，请仔细甄别。</p>
+                <div class="upload-section" style="justify-content:center;" v-show="!resultReady">
+                    <div class="upload-box" :class="{'has-file': pdfFile}" @click="triggerPdfUpload" @dragover.prevent @drop.prevent="onPdfDrop" style="max-width:480px;">
+                        <div class="icon">📄</div>
+                        <div class="text" v-if="!pdfFile">点击上传学习力综合测评报告<br><small>或拖拽文件到此处</small></div>
+                        <div class="text" v-else>报告已就绪</div>
+                        <div class="file-name" v-if="pdfFile">{{ pdfFile.name }}</div>
+                        <input type="file" ref="pdfInput" accept=".pdf" style="display:none" @change="onPdfSelect">
+                    </div>
+                </div>
+                <div class="action-bar" style="margin-top:16px;">
+                    <button class="btn btn-primary" @click="startAnalyze" :disabled="(!pdfFile && !resultReady) || analyzing">
+                        {{ analyzing ? 'AI 分析中...' : (resultReady ? 'AI 重新解析' : 'AI 智能分析') }}
+                    </button>
+                    <button class="btn btn-default" @click="resetAll" :disabled="analyzing">{{ resultReady ? '解读下一份' : '重置' }}</button>
+
+
+                </div>
+                <div v-if="analyzing" class="loading-mask">
+                    <div class="ai-loading">
+                        <div class="ai-loading-header">
+                            <span class="ai-icon"></span>
+                            <span class="ai-title">AI 智能分析中</span>
+                        </div>
+                        <div class="ai-progress-bar">
+                            <div class="ai-progress-fill" :style="{width: ((aiStep+1)/aiSteps.length*100)+'%'}"></div>
+                        </div>
+                        <div class="ai-steps">
+                            <template v-for="(s, idx) in aiSteps" :key="idx">
+                                <div v-if="idx === aiStep" class="ai-step active">
+                                    <span class="ai-step-dot spinning">◌</span>
+                                    <span class="ai-step-label">{{ s }}</span>
+                                </div>
+                            </template>
+                        </div>
+                    </div>
+                </div>
+                <div v-if="parseError" style="color:#f56c6c;margin-top:12px;">{{ parseError }}</div>
+            </div>
+
+            <!-- 结果区域 -->
+            <template v-if="resultReady">
+                <!-- 学生信息卡片 -->
+                <div class="card" v-if="studentInfo.name">
+                    <div class="card-title">学生信息</div>
+                    <div class="student-info">
+                        <div class="info-item"><span class="info-label">姓名：</span><span class="info-val">{{ studentInfo.name }}</span></div>
+                        <div class="info-item"><span class="info-label">年级：</span><span class="info-val">{{ studentInfo.grade }}</span></div>
+                        <div class="info-item"><span class="info-label">学校：</span><span class="info-val">{{ studentInfo.school }}</span></div>
+                        <div class="info-item" v-if="studentInfo.city"><span class="info-label">城市：</span><span class="info-val">{{ studentInfo.city }}</span></div>
+                        <div class="info-item"><span class="info-label">测评日期：</span><span class="info-val">{{ studentInfo.date }}</span></div>
+                    </div>
+                </div>
+
+                <!-- 综合总结 -->
+                <div class="card" v-if="summaryText">
+                    <div class="summary-card">
+                        <div class="summary-title">{{ studentInfo.name || '学生' }}的学习力综合画像</div>
+                        <div style="white-space:pre-line;">{{ summaryText }}</div>
+                    </div>
+                </div>
+
+                <!-- 概览统计 -->
+                <div class="card">
+                    <div class="card-title">测评概览</div>
+                    <div class="stats-grid">
+                        <div class="stat-card primary clickable" @click="navTo('dimTable','all')">
+                            <div class="num">{{ totalDimensions }}</div>
+                            <div class="label">测评维度总数</div>
+                        </div>
+                        <div class="stat-card danger clickable" @click="navTo('advice','urgent')">
+                            <div class="num">{{ urgentCount }}</div>
+                            <div class="label">急需提升</div>
+                        </div>
+                        <div class="stat-card warning clickable" @click="navTo('advice','improve')">
+                            <div class="num">{{ improveCount }}</div>
+                            <div class="label">有待提升</div>
+                        </div>
+                        <div class="stat-card success clickable" @click="navTo('advice','good')">
+                            <div class="num">{{ goodCount }}</div>
+                            <div class="label">继续保持</div>
+                        </div>
+                        <div class="stat-card primary clickable" @click="navTo('charts')">
+                            <div class="num">{{ overallScore.toFixed(1) }}</div>
+                            <div class="label">综合均分</div>
+                        </div>
+                        <div class="stat-card clickable" @click="navTo('charts')">
+                            <div class="num">{{ overallAvg.toFixed(1) }}</div>
+                            <div class="label">常模均分</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 各维度详细数据 -->
+                <div class="card" ref="dimTable">
+                    <div class="card-title">28维度详细分析</div>
+                    <div class="filter-tabs">
+                        <span class="filter-tab" :class="{active: dimFilter==='all'}" @click="dimFilter='all'">全部</span>
+                        <span class="filter-tab" :class="{active: dimFilter==='urgent'}" @click="dimFilter='urgent'">急需提升 ({{urgentCount}})</span>
+                        <span class="filter-tab" :class="{active: dimFilter==='improve'}" @click="dimFilter='improve'">有待提升 ({{improveCount}})</span>
+                        <span class="filter-tab" :class="{active: dimFilter==='good'}" @click="dimFilter='good'">继续保持 ({{goodCount}})</span>
+                    </div>
+                    <div style="overflow-x:auto;">
+                        <table class="dim-table">
+                            <thead>
+                                <tr>
+                                    <th>上级维度</th>
+                                    <th>子维度</th>
+                                    <th class="sortable" @click="toggleSort('score')">
+                                        得分 {{ dimSort.key==='score' ? (dimSort.order==='desc' ? '↓' : '↑') : '↕' }}
+                                    </th>
+                                    <th class="sortable" @click="toggleSort('avg')">
+                                        常模均值 {{ dimSort.key==='avg' ? (dimSort.order==='desc' ? '↓' : '↑') : '↕' }}
+                                    </th>
+                                    <th class="sortable" @click="toggleSort('diff')">
+                                        差值 {{ dimSort.key==='diff' ? (dimSort.order==='desc' ? '↓' : '↑') : '↕' }}
+                                    </th>
+                                    <th>得分图示</th>
+                                    <th>评估</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr v-for="d in filteredDimensions" :key="d.name">
+                                    <td>{{ d.parent }}</td>
+                                    <td><strong>{{ d.name }}</strong></td>
+                                    <td>{{ d.score.toFixed(1) }}</td>
+                                    <td>{{ d.avg.toFixed(1) }}</td>
+                                    <td :style="{color: d.diff >= 0 ? '#67c23a' : '#f56c6c'}">
+                                        {{ d.diff >= 0 ? '+' : '' }}{{ d.diff.toFixed(1) }}
+                                    </td>
+                                    <td>
+                                        <div class="score-bar">
+                                            <div class="bar-bg">
+                                                <div class="bar-fill" :class="getStatusClass(d.status)" :style="{width: (d.score/10*100)+'%'}"></div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <span v-if="d.status==='urgent'" class="tag-urgent">急需提升</span>
+                                        <span v-else-if="d.status==='improve'" class="tag-improve">有待提升</span>
+                                        <span v-else class="tag-good">继续保持</span>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- 图表区域 -->
+                <div class="charts-grid" ref="charts">
+                    <div class="chart-box">
+                        <div class="card-title" style="margin-top:0;">28维度能力概览</div>
+                        <div style="font-size:11px;color:#909399;margin-bottom:8px;text-align:center;">
+                            <span style="color:#6366F1;font-size:12px;">●</span> 学生得分
+                            <span style="color:#F59E0B;font-size:12px;margin-left:14px;">◆</span> 常模均值
+                        </div>
+                        <div class="chart-inner tall" id="radarChart"></div>
+                    </div>
+                    <div class="chart-box">
+                        <div class="card-title" style="margin-top:0;">单类别能力详情</div>
+                        <div class="filter-tabs" style="margin-bottom:12px;">
+                            <span class="filter-tab" v-for="cat in chartCategories" :key="cat.key"
+                                :class="{active: categoryRadarCat===cat.key}" @click="switchCategoryRadarCat(cat.key)">
+                                {{ cat.label }} · {{ cat.count }}项
+                            </span>
+                        </div>
+                        <div style="font-size:11px;color:#909399;margin-bottom:8px;text-align:center;">
+                            <span style="color:#6366F1;font-size:12px;">●</span> 学生得分
+                            <span style="color:#94A3B8;font-size:12px;margin-left:14px;">◆</span> 常模均值
+                        </div>
+                        <div class="chart-inner tall" id="categoryRadarChart"></div>
+                    </div>
+                    <div class="chart-box">
+                        <div class="card-title" style="margin-top:0;">得分与常模均值对比</div>
+                        <div class="filter-tabs" style="margin-bottom:12px;">
+                            <span class="filter-tab" v-for="cat in chartCategories" :key="cat.key"
+                                :class="{active: chartCat===cat.key}" @click="switchChartCat(cat.key)">
+                                {{ cat.label }} · {{ cat.count }}项
+                            </span>
+                        </div>
+                        <div class="chart-inner" id="barChart"></div>
+                    </div>
+                    <div class="chart-box">
+                        <div class="card-title" style="margin-top:0;">各维度差值分布</div>
+                        <div class="filter-tabs" style="margin-bottom:12px;">
+                            <span class="filter-tab" v-for="cat in chartCategories" :key="cat.key"
+                                :class="{active: chartCat===cat.key}" @click="switchChartCat(cat.key)">
+                                {{ cat.label }} · {{ cat.count }}项
+                            </span>
+                        </div>
+                        <div class="chart-inner" id="trendChart"></div>
+                    </div>
+                </div>
+
+                <!-- 辅导建议 -->
+                <div class="card" ref="adviceSection">
+                    <div class="card-title">个性化辅导建议</div>
+                    <div class="filter-tabs">
+                        <span class="filter-tab" :class="{active: adviceFilter==='all'}" @click="adviceFilter='all'">全部建议</span>
+                        <span class="filter-tab" :class="{active: adviceFilter==='urgent'}" @click="adviceFilter='urgent'">急需提升 ({{urgentCount}})</span>
+                        <span class="filter-tab" :class="{active: adviceFilter==='improve'}" @click="adviceFilter='improve'">有待提升 ({{improveCount}})</span>
+                        <span class="filter-tab" :class="{active: adviceFilter==='good'}" @click="adviceFilter='good'">继续保持 ({{goodCount}})</span>
+                    </div>
+
+                    <!-- 急需提升的统一建议 -->
+                    <div v-if="adviceFilter==='urgent' || adviceFilter==='all'" style="margin-bottom:20px;">
+                        <h3 style="font-size:15px;color:#f56c6c;margin-bottom:12px;"
+                            v-if="urgentDimensions.length>0">
+                            🔴 急需提升 ({{urgentDimensions.length}}项)
+                        </h3>
+                        <div class="advice-list">
+                            <div v-for="d in urgentDimensions" :key="d.name" class="advice-card urgent">
+                                <div class="advice-title-row">
+                                    <span><span class="advice-dim">{{ d.name }}</span><span class="advice-parent">· {{ d.parent }}</span></span>
+                                    <span class="advice-badge urgent">急需提升</span>
+                                </div>
+                                <div class="advice-text">{{ getAdviceText(d) }}</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 有待提升的统一建议 -->
+                    <div v-if="adviceFilter==='improve' || adviceFilter==='all'">
+                        <h3 style="font-size:15px;color:#e6a23c;margin-bottom:12px;"
+                            v-if="improveDimensions.length>0">
+                            🟡 有待提升 ({{improveDimensions.length}}项)
+                        </h3>
+                        <div class="advice-list">
+                            <div v-for="d in improveDimensions" :key="d.name" class="advice-card improve">
+                                <div class="advice-title-row">
+                                    <span><span class="advice-dim">{{ d.name }}</span><span class="advice-parent">· {{ d.parent }}</span></span>
+                                    <span class="advice-badge improve">有待提升</span>
+                                </div>
+                                <div class="advice-text">{{ getAdviceText(d) }}</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 继续保持 -->
+                    <div v-if="(adviceFilter==='good' || adviceFilter==='all') && goodDimensions.length>0">
+                        <h3 style="font-size:15px;color:#67c23a;margin-bottom:12px;">
+                            🟢 保持优势 ({{goodDimensions.length}}项)
+                        </h3>
+                        <div class="advice-list">
+                            <div v-for="d in goodDimensions" :key="d.name" class="advice-card good">
+                                <div class="advice-title-row">
+                                    <span><span class="advice-dim">{{ d.name }}</span><span class="advice-parent">· {{ d.parent }}</span></span>
+                                    <span class="advice-badge good">继续保持</span>
+                                </div>
+                                <div class="advice-text">{{ getAdviceText(d) }}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </template>
+
+            <!-- 返回顶部 -->
+            <div class="back-to-top" :class="{visible: showBackTop}" @click="scrollToTop">&#9650;</div>
+        </main>
+    </div>
+
+    <script>
+        // ==================== 维度定义 ====================
+        const DIMENSION_CONFIG = [
+            { parent:'学业心态', name:'学习意义', category:'学习动力' },
+            { parent:'学业心态', name:'学习兴趣', category:'学习动力' },
+            { parent:'学业心态', name:'成长型思维', category:'学习动力' },
+            { parent:'学业规划', name:'自我认知', category:'学习动力' },
+            { parent:'学业规划', name:'大学职业认知', category:'学习动力' },
+            { parent:'学业情绪', name:'学业压力管理', category:'学习动力' },
+            { parent:'学业情绪', name:'情绪管理', category:'学习动力' },
+            { parent:'学业情绪', name:'自我效能感', category:'学习动力' },
+            { parent:'认知策略', name:'复述策略', category:'学习策略' },
+            { parent:'认知策略', name:'组织策略', category:'学习策略' },
+            { parent:'认知策略', name:'精细加工策略', category:'学习策略' },
+            { parent:'元认知策略', name:'计划策略', category:'学习策略' },
+            { parent:'元认知策略', name:'监控策略', category:'学习策略' },
+            { parent:'元认知策略', name:'调节策略', category:'学习策略' },
+            { parent:'资源管理策略', name:'资料管理策略', category:'学习策略' },
+            { parent:'资源管理策略', name:'环境管理策略', category:'学习策略' },
+            { parent:'资源管理策略', name:'人际管理策略', category:'学习策略' },
+            { parent:'自我管理', name:'时间管理', category:'学习习惯' },
+            { parent:'自我管理', name:'精力管理', category:'学习习惯' },
+            { parent:'自我管理', name:'电子产品管理', category:'学习习惯' },
+            { parent:'学习流程', name:'听课环节', category:'学习习惯' },
+            { parent:'学习流程', name:'练习环节', category:'学习习惯' },
+            { parent:'学习流程', name:'考试环节', category:'学习习惯' },
+            { parent:'思维习惯', name:'创新思维', category:'学习习惯' },
+            { parent:'思维习惯', name:'系统思维', category:'学习习惯' },
+            { parent:'思维习惯', name:'批判思维', category:'学习习惯' },
+            { parent:'专注力', name:'注意集中', category:'学习习惯' },
+            { parent:'专注力', name:'注意转移', category:'学习习惯' },
+        ];
+
+        // ==================== 辅导建议知识库 ====================
+        const ADVICE_KB = {
+            '学习意义': {
+                urgent: '【急需提升】学生对学习的意义感认知较弱，可能缺乏内在驱动力。建议：① 帮助学生将学习内容与个人兴趣、未来目标做连接；② 通过真实案例展示知识的实际应用价值；③ 设立阶段性小目标，让学生体验"学会"的成就感；④ 家长多与孩子探讨"为什么要学习"，避免单纯强调分数。',
+                improve: '【有待提升】学生对学习意义有一定认识但不够深刻。建议：① 引导学生思考每门学科与未来生活的关系；② 鼓励学生记录学习中的"顿悟时刻"；③ 适当进行生涯规划启蒙，帮助建立"学习-成长-成就"的认知链。',
+                good: '【继续保持】学生对学习意义有深刻理解，内在驱动力强。建议保持现状，并可鼓励学生将这种理解分享给同伴，通过"教是最好的学"进一步巩固认知。'
+            },
+            '学习兴趣': {
+                urgent: '【急需提升】学习兴趣明显不足，可能出现厌学倾向。建议：① 挖掘学生的兴趣点，将学科知识与兴趣结合（如喜欢游戏可引入编程/数学）；② 采用多样化教学方式：视频、实验、项目制学习；③ 降低初始难度，先建立成功体验再逐步提升；④ 关注是否存在师生关系或同伴关系问题。',
+                improve: '【有待提升】学习兴趣处于中等水平，需要进一步激发。建议：① 多采用探究式学习，给学生自主选择的空间；② 引入竞赛或游戏化学习机制；③ 关注学生在哪些科目/主题上兴趣较高，分析原因并迁移策略。',
+                good: '【继续保持】学生对学习保持较高兴趣，这是一项宝贵资源。建议：① 持续提供多样化学习体验防止疲劳；② 引导深入探究感兴趣的领域，培养专长；③ 避免过度压力损害兴趣。'
+            },
+            '成长型思维': {
+                urgent: '【急需提升】学生可能存在固定型思维倾向，认为能力天生不可改变。建议：① 引导学生理解大脑的可塑性——"大脑像肌肉，越练越强"；② 用"还没有"替代"不能"的表述方式；③ 分享名人通过努力克服困难的真实故事；④ 表扬努力和策略而非天赋——"我看到你很努力地尝试了不同的方法"。',
+                improve: '【有待提升】成长型思维有待强化。建议：① 当学生面对失败时，引导分析原因并制定改进计划；② 建立"错题是成长机会"的认知；③ 定期回顾进步，让学生看到努力带来的变化。',
+                good: '【继续保持】学生具备良好的成长型思维，面对挑战时心态积极。建议：① 持续提供适度的挑战；② 鼓励学生尝试全新领域；③ 警惕过度表扬可能带来的反效果。'
+            },
+            '自我认知': {
+                urgent: '【急需提升】学生对自身特点和能力缺乏清晰认知。建议：① 通过性格测评、职业倾向测试等工具帮助学生了解自己；② 定期进行"自我复盘"，写下自己的优势和待改进点；③ 家长和老师多给予具体反馈（而非笼统的"你很好"）；④ 鼓励学生尝试不同活动，在实践中认知自我。',
+                improve: '【有待提升】自我认知仍需深化。建议：① 引导学生从多维度认识自己（学科能力、性格、兴趣、价值观）；② 建立"成长档案"记录自己的变化；③ 多与不同的人交流获取多元反馈。',
+                good: '【继续保持】学生对自己有清晰认知。建议定期回顾和自我评估，保持这种觉察力，为未来选择提供依据。'
+            },
+            '大学职业认知': {
+                urgent: '【急需提升】学生对大学和职业世界了解甚少，缺乏方向感。建议：① 带领学生参观大学校园或参加开放日活动；② 介绍不同职业的工作内容和发展路径；③ 鼓励阅读职业相关书籍或观看纪录片；④ 邀请不同职业的亲友分享工作体验。',
+                improve: '【有待提升】学生对大学和职业有一定概念但不够深入。建议：① 结合兴趣和优势，探索2-3个可能的职业方向；② 关注高校招生政策，了解选科与专业的关系；③ 参与职业体验活动或社会实践。',
+                good: '【继续保持】学生对未来发展有较好认知。建议持续关注社会变化对职业的影响，保持开放的探索心态。'
+            },
+            '学业压力管理': {
+                urgent: '【急需提升】学生学业压力较大且缺乏应对策略。建议：① 帮助学生识别压力源（考试、作业量、家长期望等）；② 教授简单放松技巧：深呼吸、正念冥想、运动释放；③ 协助制定合理的学习计划，避免临时抱佛脚；④ 家长降低过高期望，关注过程而非结果。',
+                improve: '【有待提升】学业压力管理有待加强。建议：① 培养时间管理能力，让任务变得可控；② 建立规律的运动习惯；③ 教会学生区分"可控"与"不可控"因素，聚焦于可控部分。',
+                good: '【继续保持】学生能有效管理学业压力。建议保持现有的压力应对策略，并在高压力时期主动运用。'
+            },
+            '情绪管理': {
+                urgent: '【急需提升】学生情绪管理能力较弱，可能影响学习和人际。建议：① 帮助学生识别和命名情绪（建立情绪词汇库）；② 教授情绪调节策略——暂停法、转换视角、表达感受；③ 建立安全的情感表达环境，允许学生表达负面情绪；④ 如情况严重，建议寻求专业心理支持。',
+                improve: '【有待提升】情绪管理能力一般。建议：① 坚持写情绪日记，提高情绪觉察力；② 学习区分"事件"与"对事件的看法"；③ 建立积极的自我对话习惯。',
+                good: '【继续保持】学生情绪管理能力强。建议持续练习，并能帮助同伴调节情绪，进一步提升情商。'
+            },
+            '自我效能感': {
+                urgent: '【急需提升】学生自信心不足，对自身能力缺乏信心。建议：① 设置"跳一跳够得着"的目标，让学生积累成功经验；② 寻找学生学习中的"亮点"，及时给予具体肯定；③ 建立"成功日记"记录每天的小成就；④ 避免与他人过度比较，关注自身的进步。',
+                improve: '【有待提升】自我效能感需要加强。建议：① 回顾过去成功的经历，分析成功因素；② 寻找合适的学习榜样（水平相近但稍高）；③ 将大目标拆解为小步骤，逐步建立信心。',
+                good: '【继续保持】学生自信心较强。建议持续提供适度挑战以巩固自我效能感，同时注意避免过度自信导致低估任务难度。'
+            },
+            '复述策略': {
+                urgent: '【急需提升】学生缺乏有效的信息复述和记忆方法。建议：① 学习使用思维导图整理知识点；② 采用"费曼学习法"——向他人讲解所学内容；③ 使用间隔复习法（艾宾浩斯遗忘曲线）；④ 制作知识卡片随身复习。',
+                improve: '【有待提升】复述策略使用不够熟练。建议：① 尝试不同的记忆方法（联想、编故事、图像化）；② 养成课后回顾的习惯——"这节课我学到了什么？"；③ 组织学习小组，互相讲解知识。',
+                good: '【继续保持】学生已掌握有效的复述策略。建议持续优化复习计划，探索更高效的知识整合方式。'
+            },
+            '组织策略': {
+                urgent: '【急需提升】学生缺乏知识组织和整合能力。建议：① 学习使用知识框架图、树状图等工具组织信息；② 引导发现知识点之间的关联（如数学与物理的关系）；③ 建立学科知识体系，而非零散记忆；④ 定期进行知识梳理和总结。',
+                improve: '【有待提升】组织策略有待提升。建议：① 养成做单元总结的习惯；② 尝试用不同方式（表格、图表、时间线）组织同一内容；③ 学习比较与分类的方法。',
+                good: '【继续保持】学生善于组织和整合知识。建议持续深化知识体系的构建，探索跨学科的知识连接。'
+            },
+            '精细加工策略': {
+                urgent: '【急需提升】学生对知识的深度加工能力较弱。建议：① 学习"5W1H"分析方法深入了解知识点；② 用类比和比喻解释抽象概念；③ 用自己的话重新表述学习内容；④ 提出"为什么"和"如果...会怎样"的问题深入思考。',
+                improve: '【有待提升】精细加工策略需进一步培养。建议：① 在阅读时养成做批注和提问的习惯；② 尝试将新知识与已有经验建立联系；③ 练习举一反三，寻找知识的多场景应用。',
+                good: '【继续保持】学生具备较强的深度加工能力。建议挑战更复杂的问题和项目，将精细加工能力发挥到更高水平。'
+            },
+            '计划策略': {
+                urgent: '【急需提升】学生缺乏学习规划能力。建议：① 帮助制定周/日学习计划，使用计划表或App；② 学习SMART目标制定法（具体、可衡量、可达、相关、有时限）；③ 预估任务时间，培养时间感知能力；④ 定期检查计划执行情况并调整。',
+                improve: '【有待提升】计划能力有待加强。建议：① 从制定一天的计划开始，逐步过渡到周计划；② 区分"必须完成"和"尽量完成"的任务优先级；③ 建立计划-执行-反思的闭环。',
+                good: '【继续保持】学生计划能力强。建议持续优化计划质量，并帮助培养其他人的计划能力。'
+            },
+            '监控策略': {
+                urgent: '【急需提升】学生缺乏对学习过程的自我监控。建议：① 学习过程中定时自问："我理解了吗？""这个方法有效吗？"；② 使用学习日志记录学习状态和效果；③ 设置阶段检查点（如每20分钟检查一次进度）；④ 培养"边学边思考"的习惯。',
+                improve: '【有待提升】自我监控能力需加强。建议：① 尝试番茄工作法，培养时间感知；② 学习后做简要自评（1-5分）；③ 分析低效学习的原因并调整。',
+                good: '【继续保持】学生自我监控能力强。建议持续优化学习策略，保持对学习过程的高觉察力。'
+            },
+            '调节策略': {
+                urgent: '【急需提升】当学习效果不佳时，学生缺乏调整能力。建议：① 建立"策略工具箱"——列出多种学习方法和应对方案；② 遇到困难时先分析原因再调整方法；③ 学会向老师、同伴寻求帮助；④ 养成定期反思和调整学习方案的习惯。',
+                improve: '【有待提升】调节策略有待提升。建议：① 练习在遇到困难时尝试至少2种不同方法；② 记录"失败-调整-成功"的案例以增强信心；③ 建立错题本，分析错误类型并调整策略。',
+                good: '【继续保持】学生善于根据情况调整学习策略。建议保持这种灵活性，并尝试帮助同伴解决问题。'
+            },
+            '资料管理策略': {
+                urgent: '【急需提升】学习资料管理混乱，影响学习效率。建议：① 建立分类清晰的文件夹系统（纸质+电子）；② 定期整理和清理学习资料；③ 建立错题集和重点笔记索引；④ 使用标签、颜色标记等方法快速定位资料。',
+                improve: '【有待提升】资料管理仍有优化空间。建议：① 建立"日清"习惯——每天整理当天的学习资料；② 对重要资料做备份；③ 学习使用笔记工具（如Notion、有道云笔记等）。',
+                good: '【继续保持】学生资料管理做得好。建议持续维护现有系统，定期优化分类标准。'
+            },
+            '环境管理策略': {
+                urgent: '【急需提升】学习环境干扰因素较多。建议：① 创建专属学习空间，减少杂物和干扰源；② 控制噪音——使用降噪耳机或白噪音；③ 管理电子设备——学习时手机远离或开启专注模式；④ 保持桌面整洁，光线充足。',
+                improve: '【有待提升】学习环境还可优化。建议：① 盘点当前环境中的干扰因素并逐一消除；② 建立"进入学习区=进入学习状态"的条件反射；③ 注意空气质量和温度对学习的影响。',
+                good: '【继续保持】学生善于管理学习环境。建议保持并定期评估环境是否需要调整。'
+            },
+            '人际管理策略': {
+                urgent: '【急需提升】学生在学习中的人际协作和资源利用较弱。建议：① 鼓励加入或组建学习小组；② 学习主动向老师提问和求助的技巧；③ 参加学科竞赛或课外活动拓展学习社交圈；④ 家长多创造讨论和交流学习的机会。',
+                improve: '【有待提升】人际资源利用可进一步提升。建议：① 主动与不同水平的同学交流学习；② 关注学习社区和线上优质学习资源；③ 学习有效的沟通与协作技巧。',
+                good: '【继续保持】学生善于利用人际关系促进学习。建议持续拓展学习社交网络，并在团队中发挥引领作用。'
+            },
+            '时间管理': {
+                urgent: '【急需提升】时间利用率低，常感到时间不够用。建议：① 使用时间日志记录每日时间分配；② 学习"四象限法"区分任务优先级；③ 减少"时间黑洞"——无目的刷手机、发呆等；④ 设定作业完成的时间限制，提高效率。',
+                improve: '【有待提升】时间管理仍有提升空间。建议：① 尝试番茄工作法（25分钟专注+5分钟休息）；② 提前规划第二天的3件最重要任务；③ 预留缓冲时间应对突发情况。',
+                good: '【继续保持】学生时间管理能力强。建议持续优化时间分配，探索更科学的精力与时间搭配方案。'
+            },
+            '精力管理': {
+                urgent: '【急需提升】学生精力不足或精力分配不合理。建议：① 保证充足的睡眠（初中生建议8-9小时）；② 均衡饮食，避免高糖高油食物；③ 坚持体育锻炼（每周至少3次）；④ 合理安排学习与休息，避免长时间低效学习。',
+                improve: '【有待提升】精力管理需优化。建议：① 找到自己的精力高峰时段，安排最需要脑力的任务；② 养成午间小憩（15-20分钟）的习惯；③ 注意作息规律，周末不过度补觉/熬夜。',
+                good: '【继续保持】学生精力管理良好。建议保持规律作息，关注身体信号，预防过度疲劳。'
+            },
+            '电子产品管理': {
+                urgent: '【急需提升】电子产品使用可能干扰学习。建议：① 制定电子产品使用规则（如学习时手机放在另一个房间）；② 使用屏幕时间管理工具设定限制；③ 寻找替代娱乐方式（运动、阅读、手工等）；④ 家长做榜样，减少在孩子面前使用手机。',
+                improve: '【有待提升】电子产品管理仍需加强。建议：① 明确区分"学习使用"和"娱乐使用"的时间；② 删除或隐藏容易沉迷的应用；③ 培养离线兴趣，减少对电子产品的依赖。',
+                good: '【继续保持】学生能有效管理电子产品使用。建议保持自律，定期审视使用习惯。'
+            },
+            '听课环节': {
+                urgent: '【急需提升】课堂听课效率低，知识吸收率不高。建议：① 掌握康奈尔笔记法等高效记笔记方式；② 课前预习，带着问题听课；③ 坐教室前排减少干扰；④ 课后3分钟内快速回顾本节课的核心内容。',
+                improve: '【有待提升】听课效率有提升空间。建议：① 在理解的基础上记笔记，而非机械抄写；② 课上积极思考和参与互动；③ 标记疑问点课后及时解决。',
+                good: '【继续保持】学生听课效率高。建议保持预习+专注+回顾的闭环，并尝试帮助同学提升。'
+            },
+            '练习环节': {
+                urgent: '【急需提升】练习效果不佳，知识巩固不牢。建议：① 建立"学-练-测-补"的完整学习闭环；② 采用刻意练习——聚焦薄弱点反复训练；③ 先复习再练习，避免边翻书边做题；④ 定时进行限时练习，模拟考试环境。',
+                improve: '【有待提升】练习策略可进一步优化。建议：① 建立错题本并定期复习；② 练习题难度由浅入深，循序渐进；③ 每完成一组练习后进行总结。',
+                good: '【继续保持】学生练习效率高。建议持续提升练习的针对性和难度，挑战更高水平。'
+            },
+            '考试环节': {
+                urgent: '【急需提升】考试表现经常低于实际水平。建议：① 分析失分原因——知识不熟/审题不清/时间不够/心态问题；② 学习考试技巧：时间分配、先易后难、检查策略；③ 进行模拟考试训练；④ 调整考试心态，降低焦虑水平。',
+                improve: '【有待提升】考试策略还可优化。建议：① 建立考前复习清单，确保全面覆盖；② 分析试卷结构，针对性分配复习时间；③ 考后及时复盘，总结经验教训。',
+                good: '【继续保持】学生考试策略成熟。建议持续优化考试技巧，并分享经验帮助他人。'
+            },
+            '创新思维': {
+                urgent: '【急需提升】学生思维较保守，缺乏创新意识。建议：① 多进行头脑风暴练习，鼓励"没有错的想法"；② 接触跨学科内容激发新思路；③ 鼓励动手实践和创造（如科学小实验、手工制作）；④ 减少标准答案思维，鼓励多角度思考。',
+                improve: '【有待提升】创新思维有待培养。建议：① 尝试"6顶思考帽"等多角度思考工具；② 多问"还有什么可能？""如果反过来会怎样？"；③ 关注创新案例，学习他人的创新思路。',
+                good: '【继续保持】学生具备创新思维优势。建议持续激发创造力，参加科技创新等活动发挥特长。'
+            },
+            '系统思维': {
+                urgent: '【急需提升】学生看问题较为片面，缺乏全局观。建议：① 学习使用思维导图和系统图分析问题；② 分析事物前先列出所有相关因素再梳理关系；③ 多阅读跨领域内容拓展视野；④ 练习"由点到面"的思维方式。',
+                improve: '【有待提升】系统思维能力需加强。建议：① 分析问题时思考各因素间的因果关系；② 关注时事讨论，练习多角度分析；③ 做知识总结时注意建立知识网络。',
+                good: '【继续保持】学生系统思维能力强。建议持续培养，在复杂问题分析中发挥优势。'
+            },
+            '批判思维': {
+                urgent: '【急需提升】学生对信息缺乏辨别和质疑能力。建议：① 培养"事实vs观点"的区分能力；② 学习评估信息来源的可靠性；③ 练习用证据支持观点；④ 参与辩论或讨论活动锻炼批判思维。',
+                improve: '【有待提升】批判思维有待发展。建议：① 阅读时多问"作者为什么这样说？""有相反的观点吗？"；② 关注社会热点并分析不同立场；③ 练习写议论文锻炼论证能力。',
+                good: '【继续保持】学生批判思维能力突出。建议持续锻炼独立思考和理性分析能力。'
+            },
+            '注意集中': {
+                urgent: '【急需提升】注意力容易分散，难以长时间专注。建议：① 采用番茄工作法（25分钟专注+5分钟休息）逐步延长专注时间；② 清理学习环境中的干扰源；③ 进行专注力训练（如冥想、拼图、棋类）；④ 保证充足睡眠和运动以改善注意力。',
+                improve: '【有待提升】专注力可进一步提升。建议：① 记录每日注意力最佳时段并加以利用；② 每次学习前做2分钟准备（深呼吸、清理桌面）；③ 使用专注类App辅助。',
+                good: '【继续保持】学生专注力优秀。建议持续保持，并在团队中发挥"深度学习者"的示范作用。'
+            },
+            '注意转移': {
+                urgent: '【急需提升】在不同任务间切换困难，影响效率。建议：① 练习任务切换训练（如快速阅读切换不同主题）；② 使用任务清单明确当前任务，减少频繁切换；③ 了解自己的"切换成本"——切换任务后需要多久恢复专注；④ 合理安排相似任务连续处理。',
+                improve: '【有待提升】注意转移能力可提升。建议：① 课间做快速"切换练习"（3分钟数学→3分钟英语）；② 在日程中合理安排任务顺序减少低效切换；③ 学习快速"收尾"和"启动"的技巧。',
+                good: '【继续保持】学生能灵活切换注意力。建议保持这种认知灵活性，并合理规划任务排序。'
+            }
+        };
+
+        // ==================== PDF.js 初始化 ====================
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+        // ==================== Vue 应用 ====================
+        const { createApp } = Vue;
+        const { ElMessage } = ElementPlus;
+
+        const app = createApp({
+            data() {
+                return {
+                    pdfFile: null,
+                    analyzing: false,
+                    parseError: '',
+                    resultReady: false,
+                    aiStep: 0,
+                    aiSteps: ['正在读取PDF报告', '正在解析学生信息', '正在提取28维度数据', '正在生成诊断分析', '正在生成辅导建议'],
+                    studentInfo: { name:'', grade:'', school:'', city:'', date:'' },
+                    dimensions: [],
+                    dimFilter: 'all',
+                    dimSort: { key: '', order: 'desc' },
+                    adviceFilter: 'all',
+                    chartCat: '动力',
+                    categoryRadarCat: '动力',
+                    showBackTop: false,
+                };
+            },
+            computed: {
+                totalDimensions() { return this.dimensions.length; },
+                urgentDimensions() { return this.dimensions.filter(d => d.status === 'urgent'); },
+                improveDimensions() { return this.dimensions.filter(d => d.status === 'improve'); },
+                goodDimensions() { return this.dimensions.filter(d => d.status === 'good'); },
+                urgentCount() { return this.urgentDimensions.length; },
+                improveCount() { return this.improveDimensions.length; },
+                goodCount() { return this.goodDimensions.length; },
+                overallScore() {
+                    if (this.dimensions.length===0) return 0;
+                    return this.dimensions.reduce((s,d)=>s+d.score,0)/this.dimensions.length;
+                },
+                overallAvg() {
+                    if (this.dimensions.length===0) return 0;
+                    return this.dimensions.reduce((s,d)=>s+d.avg,0)/this.dimensions.length;
+                },
+                summaryText() {
+                    if (this.dimensions.length === 0) return '';
+                    const name = this.studentInfo.name || '孩子';
+                    const score = this.overallScore;
+                    const avg = this.overallAvg;
+                    const gap = score - avg;
+                    const urgentDims = this.urgentDimensions.map(d => d.name);
+                    const goodDims = this.goodDimensions.map(d => d.name);
+                    const urgCount = this.urgentCount;
+                    const impCount = this.improveCount;
+                    const gdCount = this.goodCount;
+
+                    let parts = [];
+
+                    // 开篇总评
+                    if (Math.abs(gap) < 1) {
+                        parts.push(`${name}的综合学习力处于常模平均水平（均分${score.toFixed(1)}，常模${avg.toFixed(1)}），各项能力发展比较均衡。`);
+                    } else if (gap > 0) {
+                        const adj = gap > 1 ? '明显高于' : '略高于';
+                        parts.push(`${name}的综合均分（${score.toFixed(1)}）${adj}常模水平（${avg.toFixed(1)}），整体学习力表现不错，是个很好的起点。`);
+                    } else {
+                        const adj = gap < -0.8 ? '与常模有一定差距' : '略低于常模';
+                        parts.push(`${name}的综合均分（${score.toFixed(1)}）${adj}（常模${avg.toFixed(1)}），还有不少进步空间，但别担心，成长比现状更重要。`);
+                    }
+
+                    // 分布总览
+                    const distributionClues = [];
+                    if (urgCount > 0) distributionClues.push(`${urgCount}项急需提升`);
+                    if (impCount > 0) distributionClues.push(`${impCount}项有待提升`);
+                    if (gdCount > 0) distributionClues.push(`${gdCount}项保持优势`);
+                    parts.push(`在28个测评维度中，${distributionClues.join('、')}。`);
+
+                    // 亮点
+                    if (goodDims.length >= 3) {
+                        parts.push(`${name}在「${goodDims.slice(0, 3).join('」「')}」等维度上表现突出，这些是ta的学习优势区，值得肯定和鼓励。`);
+                    } else if (goodDims.length > 0) {
+                        parts.push(`${name}在「${goodDims.join('」「')}」方面表现不错，继续保持就好。`);
+                    }
+
+                    // 待提升方向
+                    if (urgCount >= 3) {
+                        parts.push(`需要重点关注的是「${urgentDims.slice(0, 3).join('」「')}」等维度的提升，建议参考下方的个性化辅导建议，从最触手可及的一项开始，循序渐进。`);
+                    } else if (urgCount > 0) {
+                        parts.push(`目前最需要关注的是「${urgentDims.join('」「')}」，好在数量不多，集中精力攻坚会有明显效果。`);
+                    } else if (impCount > 0) {
+                        parts.push(`虽然没有红色预警的维度，但部分维度仍有提升空间，稳扎稳打就好。`);
+                    }
+
+                    // 鼓励结尾 —— 先查找学生数据命中哪些天然维度关联对，再生成针对性的句子
+                    const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
+
+                    // 所有弱项维度（红色+橙色）
+                    const weakDims = [...urgentDims, ...this.improveDimensions.map(d => d.name)];
+
+                    // 天然维度关联对：A（高）→ B（低），附带因果解释
+                    const NATURAL_PAIRS = [
+                        { high: '学习兴趣', low: '注意集中', explain: '兴趣是注意力的发动机。${name}对学科有兴趣，说明ta不是做不到专注，只是在需要专注的时候少了一个"启动器"——而兴趣正好就是那个启动器。' },
+                        { high: '自我效能感', low: '计划策略', explain: '${name}相信自己能学好，这种"我能行"的感觉其实已经为制定学习计划打好了心理基础。下一步就是把这份信心落到纸面上：哪怕只是每天写一个"今天要搞定的一件事"，都是好的开始。' },
+                        { high: '成长型思维', low: '调节策略', explain: '${name}相信努力可以改变能力，这本身就是调节策略的底层信念。因为只有当ta觉得"换种方法会更好"时，ta才会主动去调整——而这个信念，ta已经有了。' },
+                        { high: '情绪管理', low: '考试环节', explain: '考场上的失常，很多时候不是不会做，而是被情绪盖住了。${name}的情绪管理能力不错，这是一个非常宝贵的资源——考试时，试着让ta用管理情绪的方法来稳住考场心态，效果会很直接。' },
+                        { high: '学业压力管理', low: '注意集中', explain: '学业压力会无声地消耗注意力——就像后台开着太多应用，手机自然会卡。${name}能把压力管理好，就相当于已经关掉了一批不必要的后台，再去提升注意力就轻松多了。' },
+                        { high: '学习意义', low: '精细加工策略', explain: '一个理解了"为什么要学"的人，更容易在学的时候主动追问"这个知识是怎么来的"。${name}对学习意义有感觉，这个感觉恰恰是深入加工知识的最强助推器。' },
+                        { high: '自我认知', low: '大学职业认知', explain: '${name}很清楚自己擅长什么、什么状态更高效——这份自知是规划未来的第一步。从这个切入点出发，帮ta把对自己已有的了解，慢慢延伸到"将来可能适合做什么"，就顺理成章了。' },
+                        { high: '计划策略', low: '时间管理', explain: '计划是时间的骨架。${name}善于做计划，说明ta脑子里已经有了"先做什么、后做什么"的框架，把这个框架从纸上搬到每天的时间表里，就是时间管理。' },
+                        { high: '监控策略', low: '调节策略', explain: '${name}能察觉到自己走神了、学不进去了——这个"觉察"本身就是一大步。调节策略需要的就是这种觉察：先知道哪里不对，再想办法调整。ta已经完成了最难的前半段。' },
+                        { high: '精细加工策略', low: '系统思维', explain: '精细加工的本质是把零散的知识点串成线、织成网——这正是系统思维的雏形。${name}在精加工上已经有意识了，继续往下深挖，系统思维自然会慢慢长出来。' },
+                        { high: '组织策略', low: '资料管理策略', explain: '善于梳理知识框架的人，整理笔记和资料往往也很在行——因为这两件事用的其实是同一套"分类、归纳、建立结构"的底层能力。${name}只需要把这一套能力有意识地迁移到资料整理上。' },
+                        { high: '复述策略', low: '听课环节', explain: '${name}习惯于用自己的话把学过的东西重新讲一遍，这个习惯如果也用到听课中——边听边在心里做"翻译"，听课的理解效率会明显提高。' },
+                        { high: '时间管理', low: '精力管理', explain: '${name}的时间安排有章法了，接下来可以在这个基础上加一层"精力匹配"——把最烧脑的任务安排在自己精力最旺盛的时段。时间是容器，精力才是内容。' },
+                        { high: '注意集中', low: '练习环节', explain: '注意力是练习的质量保障。${name}的注意力集中度不错，把这个优势聚焦到练习中，哪怕每天只练一小段时间，效果都会比长时间低效练习好得多。' },
+                        { high: '系统思维', low: '批判思维', explain: '系统思维和批判思维像一对双生兄弟——能看清楚整体结构的人，才更容易发现结构中不合理的细节。${name}的前者已经上路了，后者就在不远处。' },
+                        { high: '电子产品管理', low: '注意集中', explain: '能主动管住手机的孩子，已经拿到了注意力管理最难的入场券。${name}的电子管理做得好，说明ta的自控力基础是有的，接下来就是把这份自控力辐射到更广泛的专注场景中去。' },
+                        { high: '听课环节', low: '练习环节', explain: '${name}的课堂吸收效率不错，这是很占便宜的一个能力。课堂理解了80%，练习就是巩固和延伸；课堂只听懂50%，练习就要花三倍时间去补。利用好这个效率差，进步会很显著。' },
+                        { high: '环境管理策略', low: '注意集中', explain: '${name}知道给自己营造安静、有序的学习环境，这说明ta对"什么条件能让自己进入状态"有真实的体感。用好这个体感，在需要高度专注的时候创造条件给自己，就是最省力的提升方式。' },
+                        { high: '人际管理策略', low: '学业压力管理', explain: '${name}碰到问题愿意找老师同学帮忙——这其实是压力管理里最有效的一招：把压力说出来。如果能把"求助"也作为一种主动减压的习惯来培养，学业压力会有明显缓解。' },
+                        { high: '调节策略', low: '精力管理', explain: '懂得根据状态调整学习方法的人，其实已经在做精力管理了。${name}会调节策略，下一步就是把这种"状态感知+灵活调整"的能力有意识地和精力曲线匹配起来。' },
+                        { high: '创新思维', low: '批判思维', explain: '创新和批判往往是联动的：敢于想"为什么一定是这样"，才会有"可不可以换一种做法"。${name}的创新思维已经有了苗头，再多问一个"为什么"，批判思维就会被带动起来。' },
+                        { high: '学习兴趣', low: '学业压力管理', explain: '真正对学习本身感兴趣的人，在面对考试和成绩时心态容易更稳——因为ta的动力来自内在，而不完全依赖外界的评判。${name}的学习兴趣就是ta最好的压力缓冲垫。' },
+                        { high: '自我效能感', low: '学业压力管理', explain: '相信自己能学好的人，面对压力时的第一反应不是"我完了"，而是"我再想想办法"。${name}的自我效能感已经为ta提供了一种天然的减压机制——只要把这个信念带入压力场景，焦虑自然会减轻。' },
+                        { high: '自我效能感', low: '考试环节', explain: '考试很大程度上是一场信心的博弈。${name}相信自己能做好，这份信念在考场上比多做十道题更有用——因为它决定了ta拿到不会的题时，是放弃还是再试一次。' },
+                        { high: '成长型思维', low: '注意转移', explain: '相信"能力可以改变"的人，更容易在遇到瓶颈时主动换个角度、换种方法。${name}的成长型思维是注意转移的最佳燃料——因为ta相信换一条路也能到达目的地。' },
+                        { high: '成长型思维', low: '练习环节', explain: '成长型思维的人眼中的练习不是重复，而是"每次都在变好一点点"。${name}已经有了这个最底层的信念，把练习从"完成任务"变成"积累进步"，效果会大不一样。' },
+                        { high: '时间管理', low: '练习环节', explain: '会管理时间的人，永远留得出"练"的时间。${name}的时间管理能力不错，接下来就是把练习当作时间表上的优先事项——不需要多，每天固定20分钟就够。' },
+                        { high: '情绪管理', low: '人际管理策略', explain: '能管理好自己的情绪，就更容易理解别人的情绪——这是人际交往的核心能力。${name}的情绪管理已经在为ta的人际关系铺路了，接下来只需要有意识地把这份觉察用在和老师、同学的互动中。' },
+                        { high: '自我认知', low: '注意转移', explain: '知道自己什么状态下学得进去、什么状态下学不进去，这是注意力管理的第一步。${name}的自我认知很清晰，把这份了解用到注意力的自我调节上——"我现在累了，换一科轻松的先做"——就成了注意转移。' },
+                        { high: '复述策略', low: '精细加工策略', explain: '复述是把知识记住的第一步，精细加工是把知识理解透的下一步。${name}已经习惯了用复述来巩固，再往前走一小步：在复述的时候问自己一句"这跟我知道的什么有关系？"，精细加工就自然启动了。' },
+                        { high: '计划策略', low: '监控策略', explain: '会做计划的人，天然就适合做监控——因为计划就是监控的参照物。${name}把计划做好了，只需要在执行中多一步"看看进度跟计划差多少"，监控能力就顺带练出来了。' },
+                        { high: '调节策略', low: '练习环节', explain: '懂得根据状态调整方法的人，在练习中最容易找到"性价比最高"的训练方式。${name}会调节策略，在练习时就可以有意识地问自己"这个方法有效吗？要不要换一种？"——这样练一次，顶别人练三次。' },
+                        { high: '环境管理策略', low: '精力管理', explain: '了解什么环境能让自己更专注的人，其实已经在做精力管理了。${name}会主动管理学习环境，接下来只需要把这个逻辑延伸到时间上——在精力最好的时段安排最难的事，就是最高级的精力管理。' },
+                        { high: '学习意义', low: '大学职业认知', explain: '一个真正理解"为什么学"的人，更容易想清楚"将来想做什么"。${name}对学习意义的感知是职业认知的指南针——从"学这些有什么用"出发，慢慢过渡到"学了这些我可以成为什么样的人"。' },
+                        { high: '注意集中', low: '注意转移', explain: '能集中注意力和能转移注意力，其实是同一块肌肉的两种用法。${name}的集中力已经有了，现在只需要练习"主动收放"——在需要时深扎进去，在需要时利落地抽出来换下一件事。' },
+                        { high: '系统思维', low: '创新思维', explain: '能把零散知识串成体系的人，最容易在体系中发现裂缝、找到新可能。${name}的系统思维是创新最好的土壤——创新从来不是凭空出现，而是在已有结构上长出来的新枝。' },
+                        { high: '组织策略', low: '精细加工策略', explain: '善于对知识分类归纳的人，在深入加工时天然就有优势——因为材料已经整理好了，剩下的就是往里面"钻"。${name}的组织能力为精细加工铺好了路，只需要再追问一层"所以呢？"。' },
+                        { high: '听课环节', low: '注意转移', explain: '会听课的人懂得在听讲中灵活切换注意力——从听老师讲到记笔记，从思考问题到听同学回答。${name}的听课效率不错，把这种灵活的注意力切换有意识地延伸到自习中去，效果会很明显。' },
+                        { high: '人际管理策略', low: '情绪管理', explain: '善于和老师同学沟通的孩子，在情绪上通常也有更多出口——因为倾诉本身就是最好的情绪调节。${name}的人际关系是ta情绪管理的一张安全网，鼓励ta在情绪不好的时候主动找人聊一聊。' },
+                        { high: '资料管理策略', low: '时间管理', explain: '资料整理得井井有条的人，花在"找东西"上的时间就少——省出来的时间就是最直接的"时间管理"。${name}的资料管理习惯已经在为ta节省时间了，再往前一步：把资料管理和任务优先级结合起来，就是完整的时间管理。' },
+                        { high: '学业压力管理', low: '情绪管理', explain: '能把学业压力处理好的人，往往已经无意识地掌握了很多情绪调节的方法。${name}在压力管理上有自己的办法，现在只需要把这些办法"命名"一下，让ta知道"原来我在用这个方法调节情绪"，就可以有意识地迁移到更广泛的情绪场景中。' },
+                        { high: '考试环节', low: '学业压力管理', explain: '考试经验本身是缓解考试焦虑最好的药——经历得多了，考场就不再是未知的战场。${name}如果把每次考试都当作一次"压力排练"，考完之后复盘一下"这次紧张在哪里、下次怎么应对"，学业压力管理能力会随考试次数自然增长。' },
+                        { high: '注意集中', low: '听课环节', explain: '注意力是课堂效率的第一保障。${name}的专注力不错，只要在听课前做一个简单的"状态预设"——"接下来40分钟，我的任务就是跟上老师的思路"——听课效果就会明显再上一个台阶。' },
+                        { high: '自我效能感', low: '人际管理策略', explain: '相信自己的人，在人际交往中更敢开口、更不怕被拒绝。${name}的自我效能感是ta社交信心的底气，鼓励ta在遇到学习困难时主动找老师同学讨论——ta有这个能力，只是需要多试几次。' },
+                        { high: '情绪管理', low: '练习环节', explain: '情绪稳定的人，练习效率最高——因为ta不会因为一次做错就否定自己，也不会因为烦躁而中途放弃。${name}的情绪管理能力是练习质量的稳定器，把这个优势带到练习中，会有事半功倍的效果。' },
+                        { high: '学习意义', low: '复述策略', explain: '当一个人清楚"为什么要学"时，复述就不再是枯燥的重复，而是有意义的回顾和整理。${name}的学习意义感可以为复述注入动力——在复述时想一想"这个知识点到底在说什么"，枯燥感会大大降低。' },
+                        { high: '学习兴趣', low: '复述策略', explain: '感兴趣的内容，不需要刻意重复也能记住。${name}可以把"兴趣"和"复述"结合起来——在复习自己感兴趣的科目时多用复述，体验"因为喜欢所以记得住"的正向循环，再把这种感觉迁移到其他科目上。' },
+                        { high: '时间管理', low: '资料管理策略', explain: '时间越紧，资料整理越重要——找一张卷子花十分钟，就是对时间管理最大的消解。${name}的时间管理意识已经有了，配套把资料分门别类整理好，每找一份资料省下的几分钟，积累下来就是一大块学习时间。' },
+                        { high: '电子产品管理', low: '时间管理', explain: '能管住手机的人，天然就已经赢得了时间管理的半场胜利——因为时间最大的敌人往往就是"再刷五分钟"。${name}在电子管理上的自控力，恰恰是时间管理最需要的那种"说停就停"的能力。' },
+                        { high: '电子产品管理', low: '练习环节', explain: '管理好电子产品，腾出来的不只是时间，还有完整的不被打断的练习块。${name}已经证明了ta能管住自己，接下来就是把"不被手机打断的时间"直接划给练习——哪怕每天只划出20分钟，效果也比碎片化练习好得多。' },
+                        { high: '监控策略', low: '注意转移', explain: '能察觉到自己走神了，就是注意转移的第一步——因为你得先"知道"自己走神了，才能"主动"把注意力拉回来。${name}的监控能力让ta在学习中始终保持着一种觉察，接下来的练习就是：觉察到走神→不自责→温和地把注意力放回正事上。' },
+                        { high: '精细加工策略', low: '批判思维', explain: '精细加工的本质是追问"为什么"和"这意味着什么"——这恰恰是批判性思维的起点。${name}在精加工时已经有了追问的习惯，再多向前一步："这个说法有证据吗？有没有别的可能？"，批判思维就自然长出来了。' },
+                        { high: '组织策略', low: '复述策略', explain: '经过分类和归纳的知识，复述效率会高得多——因为脑子里已经有了"抽屉"，每个知识点放在哪个抽屉里清清楚楚。${name}的组织能力为复述搭建了书架，接下来只需要把书从书架上拿下来读一遍，就是高效复述。' },
+                        { high: '环境管理策略', low: '练习环节', explain: '好的学习环境是高质量练习的隐形推手——在一个安静整洁的环境里练习，专注成本天然就低。${name}懂得为自己创造好环境，把这个优势延伸到练习中：每次练习前先花两分钟把桌面清空、把干扰源关掉，练习质量会肉眼可见地提升。' },
+                        { high: '情绪管理', low: '注意转移', explain: '情绪会影响注意力的方向——焦虑时容易被负面信息吸引，平静时更容易主动切换任务。${name}的情绪管理能力是注意转移的遥控器，当ta发现自己陷在某道题里出不来时，先做一个深呼吸调整情绪，再告诉自己"先放一放，做下一题"，注意转移就完成了。' },
+                        { high: '复述策略', low: '考试环节', explain: '考试考的不是"会不会"，而是"在限定时间内能不能想起来"。复述策略就是最好的"提取练习"——平时复述得越多，考试时提取的速度就越快。${name}坚持做复述，就是在为考场的"快速提取"积累经验，到考试时自然能调动出来。' },
+                        { high: '系统思维', low: '大学职业认知', explain: '能把学科知识串成系统的人，更有能力把"我学过什么"和"我能做什么"串起来。${name}的系统思维是职业认知的基础设施——每学完一个单元，花五分钟想一下"这个知识在实际工作中有什么用"，大学和职业的认知就会慢慢清晰起来。' },
+                        { high: '自我认知', low: '情绪管理', explain: '知道自己擅长什么、在什么状态下学得最好，这本身就是情绪管理的底层能力——因为自我认知越清晰，情绪波动就越可控。${name}的自我认知为情绪管理提供了"预警系统"，当ta觉察到自己状态不对时，及时做调整就是最好的情绪管理。' },
+                        { high: '注意转移', low: '精力管理', explain: '懂得及时切换任务的人，在精力管理上有天然的优势——因为切换本身就是一种休息。${name}的注意转移能力不错，把它有意识地用到精力管理中：在感到疲惫前主动换一科做、换一种方式学，而不是等到精疲力竭才休息。' },
+                        { high: '创新思维', low: '注意转移', explain: '有创造力的人往往思维跳跃快，这本来是注意转移的好底子。${name}的创新思维让ta不固着在一个思路上，在遇到难题时能快速换角度——把这种"跳跃"有意识地用在任务切换上，创新思维就成了注意转移的加速器。' },
+                    ];
+
+                    // 查找命中哪些关联对：强→弱，且两者分数差不小于2，并记录差距
+                    const dimMap = {};
+                    this.dimensions.forEach(d => { dimMap[d.name] = d; });
+                    const matchedPairs = NATURAL_PAIRS.filter(p => {
+                        const hDim = dimMap[p.high], lDim = dimMap[p.low];
+                        if (!hDim || !lDim) return false;
+                        return goodDims.includes(p.high) && weakDims.includes(p.low)
+                            && hDim.score - lDim.score >= 2;
+                    }).map(p => ({ ...p, gap: dimMap[p.high].score - dimMap[p.low].score }));
+
+                    // 用于替换 explain 中的 ${name}
+                    const fill = (tpl) => tpl.replace(/\$\{name\}/g, name);
+
+                    // ---------- 关联对模板生成函数（按差距分3档）----------
+                    const makePairSentence = (matchedPair) => {
+                        // 差距 2-3：温和提示型
+                        const tplsSmall = [
+                            `再看一个有意思的发现：${name}的「PR.h」稍好一些，而「PR.l」还有进步空间——${fill(matchedPair.explain)}`,
+                            `${name}的「PR.h」和「PR.l」之间有一个小小的落差，但这恰恰是一个最容易弥合的差距：${fill(matchedPair.explain)}`,
+                            `${name}有一个值得留意的组合：「PR.h」和「PR.l」。${fill(matchedPair.explain)}`,
+                            `${name}的「PR.h」比「PR.l」略高一筹，其实这两个维度之间有一条天然的通道：${fill(matchedPair.explain)}`,
+                            `特别值得说的是，${name}的「PR.h」和「PR.l」之间其实不是孤立的：${fill(matchedPair.explain)}`,
+                            `${fill(matchedPair.explain)}这是${name}接下来很值得关注的一个连接点。`,
+                            `最值得关注的一组关系：${name}的「PR.h」→「PR.l」——${fill(matchedPair.explain)}`,
+                            `从测评数据来看，${name}用一个优势去带动一个弱项，是最经济的进步路线：${fill(matchedPair.explain)}`,
+                            `${name}在「PR.h」上做得好不是偶然的，而它恰好能给「PR.l」提供一条捷径：${fill(matchedPair.explain)}`,
+                            `${name}的「PR.h」是加分项，「PR.l」是成长项——有意思的是它们其实是一体两面：${fill(matchedPair.explain)}`,
+                            `${name}只需要把「PR.h」上已经做对的事情，再往「PR.l」上延伸一点——${fill(matchedPair.explain)}`,
+                            `看到${name}的「PR.h」和「PR.l」这一高一低，其实差距不大，调整起来会很快：${fill(matchedPair.explain)}`,
+                        ];
+                        // 差距 3-4：肯定优势、明确方向型
+                        const tplsMedium = [
+                            `我建议${name}把注意力放在「PR.h」和「PR.l」的连接上。因为${fill(matchedPair.explain)}`,
+                            `${name}的强项「PR.h」正好是提升弱项「PR.l」的一把钥匙——${fill(matchedPair.explain)}`,
+                            `${name}的「PR.h」是优势，「PR.l」暂时偏弱，这两个维度其实有一条自然的通道：${fill(matchedPair.explain)}`,
+                            `我觉得${name}最有可能先突破的就是「PR.l」，因为ta在「PR.h」上的表现说明ta已经具备了突破它需要的底层素质：${fill(matchedPair.explain)}`,
+                            `${name}的数据里有一对很自然的"高低搭配"——「PR.h」高、「PR.l」低。这其实是个好消息：${fill(matchedPair.explain)}`,
+                            `${name}把「PR.h」做好了，其实等于为「PR.l」铺了一段路：${fill(matchedPair.explain)}`,
+                            `如果我只能给${name}一条建议，我会说：用「PR.h」的方法去攻克「PR.l」。${fill(matchedPair.explain)}`,
+                            `${name}在「PR.h」上已经证明了自己的能力，现在最有性价比的做法就是用这个已验证的能力去带动「PR.l」——${fill(matchedPair.explain)}`,
+                            `${name}的「PR.h」让我觉得「PR.l」的进步只是迟早的事——${fill(matchedPair.explain)}`,
+                            `${name}身上有一个很妙的结构：「PR.h」和「PR.l」是一对可以互相借力的维度。${fill(matchedPair.explain)}`,
+                            `为什么${name}的「PR.h」做得好而「PR.l」偏弱？答案可能很简单：${fill(matchedPair.explain)}`,
+                            `${name}已经有了「PR.h」这个发动机，接下来只需要把它连上「PR.l」这个轮子——${fill(matchedPair.explain)}`,
+                            `${name}的「PR.h」和「PR.l」之间有一条现成的桥——${fill(matchedPair.explain)}`,
+                            `与其问"为什么${name}的「PR.l」不够好"，不如问"怎么用「PR.h」的优势把「PR.l」带上来"。${fill(matchedPair.explain)}`,
+                            `${name}在「PR.h」上的经验，可以原封不动地拿给「PR.l」用。因为${fill(matchedPair.explain)}`,
+                            `${name}不需要在「PR.l」上从零开始——「PR.h」已经为ta积累了大量可迁移的经验：${fill(matchedPair.explain)}`,
+                            `测评数据里最让我注意的是「PR.h」和「PR.l」的组合——它们之间有一种天然的"强弱互补"关系：${fill(matchedPair.explain)}`,
+                            `${name}有一个很珍贵的组合——「PR.h」强而「PR.l」待提升。这不是问题，这是方向：${fill(matchedPair.explain)}`,
+                            `${fill(matchedPair.explain)}所以${name}不需要从头学起，只需要换个角度用自己已有的能力。`,
+                            `从「PR.h」到「PR.l」的提升路径可能是${name}成长最顺的一条线——${fill(matchedPair.explain)}`,
+                        ];
+                        // 差距 4+：突出亮点、激发信心型
+                        const tplsLarge = [
+                            `「PR.h」和「PR.l」看起来离得很远，但${name}的数据告诉我它们其实离得很近：${fill(matchedPair.explain)}`,
+                            `${name}的数据里有一个隐藏的关联：「PR.h」→「PR.l」。${fill(matchedPair.explain)}`,
+                            `${fill(matchedPair.explain)}如果${name}能把这两个维度打通，中间的能力迁移会是水到渠成的事。`,
+                            `${name}的「PR.h」已经超过了常模，这是一个现成的支点——把这个支点架到「PR.l」下面，${fill(matchedPair.explain)}`,
+                            `${name}在「PR.h」上的表现非常突出，而「PR.l」刚好是最值得投入的成长点——这两个维度放在一起看，意义非凡：${fill(matchedPair.explain)}`,
+                            `${name}的学习力拼图上，「PR.h」已经亮起来了，而「PR.l」只需要一点牵引光——${fill(matchedPair.explain)}`,
+                            `如果说${name}的学习力有一根"隐藏的杠杆"，那一定就是「PR.h」→「PR.l」这条线。${fill(matchedPair.explain)}`,
+                            `「PR.h」的高分和「PR.l」的提升空间之间，藏着${name}最值得走的一条路：${fill(matchedPair.explain)}`,
+                            `最让我惊喜的是，${name}在「PR.h」上的能力完全可以"平移"到「PR.l」上——${fill(matchedPair.explain)}`,
+                            `${name}在「PR.h」上的优势不是在说"这一项我很好"，而是在说"我具备了一项可以帮到其他维度的能力"——${fill(matchedPair.explain)}`,
+                            `${name}的数据里有一个很有趣的信号：「PR.h」和「PR.l」之间的差距其实是一次巨大的成长机会——${fill(matchedPair.explain)}`,
+                            `${fill(matchedPair.explain)}这是${name}接下来最值得花时间的一个连接点。`,
+                            `看到${name}的「PR.h」和「PR.l」这一高一低，我想到一个很实用的策略：${fill(matchedPair.explain)}`,
+                        ];
+                        const gap = matchedPair.gap;
+                        // 60% 按差距选话术，40% 随机混搭避免千篇一律
+                        const allTpls = [...tplsSmall, ...tplsMedium, ...tplsLarge];
+                        let pool;
+                        if (Math.random() < 0.4) {
+                            pool = allTpls;
+                        } else if (gap >= 4) {
+                            pool = tplsLarge;
+                        } else if (gap >= 3) {
+                            pool = tplsMedium;
+                        } else {
+                            pool = tplsSmall;
+                        }
+                        const tpl = pick(pool);
+                        return tpl.replace(/PR\.h/g, `「${matchedPair.high}」`).replace(/PR\.l/g, `「${matchedPair.low}」`);
+                    };
+
+                    // ---------- 通用鼓励模板（不点维度名，只根据均分说话）----------
+                    const generalTemplatesHigh = [
+                        `${name}的综合均分${score.toFixed(1)}是个相当不错的起点。ta的学习系统已经初步建立起来了，接下来要做的不是推倒重来，而是在现有基础上微调一两个关键环节。`,
+                        `${score.toFixed(1)}分说明${name}在学习这件事上已经找到感觉了。学习力一旦开始建立正向循环，进步会越来越省力。`,
+                        `${name}均分${score.toFixed(1)}，底子很稳。学习这条路不是比谁起步快，而是比谁走得远。ta已经跑在正确的方向上了。`,
+                        `${score.toFixed(1)}分意味着${name}在大多数维度上已经形成了有效的方法。方法的珍贵在于它可以复制——把这套方法扩散到稍弱的地方，整体的效果会更明显。`,
+                        `${name}拿到${score.toFixed(1)}分不容易，这背后一定有属于ta自己的学习节奏。继续保持这个节奏，同时在最薄弱的一两个维度上有意识地加码，画面会越来越好看。`,
+                        `均分${score.toFixed(1)}，${name}的学习力结构整体向上。有时候进步不需要24个维度一起发力，只需要盯住最需要的那一个，把力发对地方就好。`,
+                        `${score.toFixed(1)}分，${name}的潜力还远远没到天花板。把眼光放长远一些，这个分数只是成长曲线上的一个早期节点。`,
+                        `${name}的综合表现让人有信心。均分${score.toFixed(1)}背后反映出的是良好的学习习惯和策略意识，这两样东西一旦内化，受益是终身的。`,
+                        `均分${score.toFixed(1)}，${name}已经跨过了学习力的第一个分水岭。接下来的重点是"精益求精"——不是面面俱到，而是找准一两个最能撬动整体变化的维度。`,
+                        `${score.toFixed(1)}分，${name}不需要跟任何人比，只需要专注把自己的短板变中板、中板变长板。每进步一点，都是实打实的成长。`,
+                        `${name}均分${score.toFixed(1)}，说明ta的学习系统运行得不错。系统运行得好的人，最大的优势是"可预测性"——你知道ta能持续产出，而不靠偶然爆发。`,
+                        `${score.toFixed(1)}分这个数字的背后，是${name}在28个维度上的综合表现。其中有闪光的强项，也有待雕琢的角落——这恰恰是最好的状态：有底气，也有空间。`,
+                        `${name}目前均分${score.toFixed(1)}，已经有相当不错的基础了。接下来的任务不是更大压力，而是更聪明的选择——把时间花在边际收益最高的地方。`,
+                        `均分${score.toFixed(1)}，${name}的学习习惯、策略和动力三驾马车都在正轨上。偶尔有几匹马稍微慢了一点，但整体车队的方向和速度都是对的。`,
+                        `${score.toFixed(1)}分，${name}表现出了良好的学习素养。素养这个东西，一旦建立就轻易不会消失，它会在不同阶段、不同学科里持续发挥效用。`,
+                        `${name}的${score.toFixed(1)}分是一个让人安心的数字——不是因为它已经很高了，而是因为它表明了一切都在正确的轨道上运行。`,
+                        `均分${score.toFixed(1)}，${name}已经证明了自己"会学"。接下来的问题是：怎么"学得更好"？答案就藏在那些稍弱的维度里，一个一个来就行。`,
+                        `${name}的均分${score.toFixed(1)}说明ta的学习系统已经进入良性循环。良性循环最大的好处是：只要你继续转，它就会越转越顺。`,
+                        `均分${score.toFixed(1)}——${name}的学习力就像一棵已经扎根的树，接下来要做的不是重新种一棵，而是浇水施肥让根更深、叶更茂。`,
+                        `${score.toFixed(1)}分，${name}已经站在了一个不错的高度。从高处往下看，最需要提升的是哪个维度一目了然——先解决那个"一眼就能看到"的问题，效果往往最显著。`,
+                        `${name}的均分${score.toFixed(1)}说明ta掌握了学习的底层逻辑。底层逻辑是最值钱的东西——它不挑学科、不挑年级，换什么场景都能用。保持住这个基本功，剩下的交给时间。`,
+                        `均分${score.toFixed(1)}，${name}的学习习惯、策略和动力已经有了比较稳固的三角结构。三角形具有稳定性，下一步要做的就是给这个三角形"加高"——在最高的那条边再垫一块砖。`,
+                        `${score.toFixed(1)}分，${name}最让人放心的不是分数本身，而是分数背后的可迁移能力。会学的人换一门课还是学得好，因为ta掌握的是方法，不是死记硬背的答案。`,
+                        `均分${score.toFixed(1)}意味着${name}已经越过了"会不会学"的门槛，进入了"怎么学得更好"的阶段。从会学到学好，中间只差一个词——精准。精准地在弱项上发力，效果立竿见影。`,
+                    ];
+                    const generalTemplatesMid = [
+                        `${name}均分${score.toFixed(1)}，正处在"踮踮脚就能够到"的黄金位置。这个阶段最需要的是找准一两个发力点，集中做透，信心自然就来了。`,
+                        `${score.toFixed(1)}分意味着${name}处于常模平均水平，这其实是最好的弹性区间——往上走有空间，往下有警觉，正好借这股张力让自己动起来。`,
+                        `${name}目前均分${score.toFixed(1)}，不需要推倒重来，也不需要全面出击。找到最触手可及的一项，用心做好，变化就会从这里开始向外扩散。`,
+                        `均分${score.toFixed(1)}，${name}跟大多数同龄人差不多。但"差不多"不代表"就这样了"——每一个微小的改变，都能让成长曲线往上翘一点点。`,
+                        `${score.toFixed(1)}分，${name}正处在从A到A+的跃迁窗口期。窗口期不会一直开着，抓住现在的状态，从最薄弱的地方入手，撬动效果会最大。`,
+                        `${name}的${score.toFixed(1)}分像一个半满的杯子——既有积累，又有空间。与其纠结杯子为什么没满，不如想想怎么用已有的水养出更多的东西来。`,
+                        `均分${score.toFixed(1)}是一个很诚实的分数，它既不夸大也不贬低${name}的努力。诚实的数据就是最好的老师，告诉我们该从哪一条路开始走。`,
+                        `${score.toFixed(1)}分，${name}不是最好的，也不是最差的，正因为如此，ta的可塑性是最强的。一张有底色的画布，比一张白纸更容易画出好作品。`,
+                        `${name}均分${score.toFixed(1)}，比上不足比下有余。但真正的进步从来不是跟别人比出来的——是跟上周的自己、上个月的自己比出来的。`,
+                        `均分${score.toFixed(1)}的${name}，学习方法可能还没有完全定型。这反而是个机会——方法没定型，就意味着还可以塑造成最适合ta的样子。`,
+                        `${score.toFixed(1)}分，${name}需要的是精准的引导而不是泛泛的努力。有时候只需要换一个习惯、改一种方法，效果就完全不一样了。`,
+                        `${name}目前均分${score.toFixed(1)}，说明ta的学习力结构比较均衡。均衡发展的孩子往往后劲更足，因为ta没有致命的短板拖后腿。`,
+                        `均分${score.toFixed(1)}就是${name}的起跑位置。没有抢跑的优势，也没有落后的焦虑，从从容容出发的心态，反而最容易跑出好成绩。`,
+                        `${score.toFixed(1)}分，${name}正站在一个十字路口——往左是维持现状，往右是突破自己。只需要一个轻轻的方向提示，ta就可能走上那条更亮的路。`,
+                        `${name}的均分${score.toFixed(1)}告诉我们：ta不需要跟"别人家的孩子"比，只需要找到属于自己的学习节奏。节奏对了，一切都会顺起来。`,
+                        `均分${score.toFixed(1)}，${name}不是学不好，而是可能在部分维度上还没"开窍"。而"开窍"这件事，往往只差一个对的方法和一个对的时间点。`,
+                        `${score.toFixed(1)}分，${name}最大的优势是"还有空间"。有空间意味着有可能性，可能性意味着还有无数种方法可以去试——直到找到最对的那一种。`,
+                        `${name}目前均分${score.toFixed(1)}，处于向上有空间、向下有底线的舒适张力区。这个位置最适合做一件事——选一个最想突破的维度，用一个月的时间和它"死磕"到底。`,
+                        `均分${score.toFixed(1)}的${name}，就像一杯半满的水——亮点已经不少了，但潜力也同样可观。半满的水才最有晃动感，而晃动感就是成长的信号。`,
+                        `${score.toFixed(1)}分意味着${name}的学习力已经有了基本盘。有基本盘的孩子最让人放心，因为ta不会大起大落，只需要在稳中求进。`,
+                        `均分${score.toFixed(1)}，${name}的学习状态处在一个"加把劲就能上去"的阶段。这个阶段最怕的不是慢，而是停下来——只要保持小幅持续进步，半年后的差距会自己显现。`,
+                        `${name}的${score.toFixed(1)}分就像一根刚刚校准的指南针——方向已经对了，接下来只需要走起来。不用跑，走就行，每一步都算数。`,
+                        `均分${score.toFixed(1)}的${name}处在一个非常有趣的区间：往上走一截就能看到更好的风景，往下滑一点就会引起警觉。这个位置本身就带有一种天然的"向上驱动力"。`,
+                        `${score.toFixed(1)}分，${name}的学习力版图已经初具雏形。版图完整的孩子最不容易迷失方向——因为ta知道自己在哪、要去哪，唯一的变量是"走多快"，而速度是可以自己控制的。`,
+                        `均分${score.toFixed(1)}，${name}的潜力比分数显示的要大得多。潜力这个东西不需要"开发"，只需要"释放"。释放潜力的最好方式不是施压，而是给ta一个够得着的目标、一套可行的路线、一句真诚的"你可以"。`,
+                    ];
+                    const generalTemplatesLow = [
+                        `${name}目前均分${score.toFixed(1)}，但请一定相信：学习力的加速度比绝对值更重要。先稳住情绪和信心，再从最触手可及的一个维度开始，三个月后再看，一定不一样。`,
+                        `${score.toFixed(1)}分不是终点，它只是一个导航信号，告诉我们${name}现在的位置。而接下来往哪个方向走、怎么走，才是最有意思的部分。`,
+                        `${name}的均分${score.toFixed(1)}虽然低于常模，但别忘了——竹子在前四年只长了三厘米，第五年却能在六周内蹿到十五米。扎实扎根，静待花开。`,
+                        `均分${score.toFixed(1)}正好说明${name}的潜力还没有被充分激活。换个角度想：这恰恰意味着进步空间巨大，稍微用对方法就能看到明显的提升。`,
+                        `${score.toFixed(1)}分，${name}可能在某些维度上遇到了瓶颈。瓶颈不可怕，可怕的是不知道瓶颈在哪。好消息是，这份报告已经把路径画出来了。`,
+                        `${name}的${score.toFixed(1)}分不是在否定ta，而是在说"我们该换一种方式了"。换方式从来不是失败，而是智慧的体现。`,
+                        `均分${score.toFixed(1)}，说实话确实有成长空间。但龟兔赛跑赢的是乌龟，不是因为乌龟快，而是因为它一直在走。持续的小步前进，比偶尔冲刺更有力量。`,
+                        `${score.toFixed(1)}分，${name}可能还没找到属于自己的学习节奏。节奏是可以调的，方法是可以换的——这两件事，都不需要天赋，只需要尝试和耐心。`,
+                        `${name}目前${score.toFixed(1)}分，学习的路上谁还没跌过几跤呢？关键不是摔没摔，而是摔完之后是趴着还是换个姿势继续往前走。`,
+                        `均分${score.toFixed(1)}，${name}正处在一个关键的蓄力期。这个阶段最重要的不是冲刺，而是打好基本功、建好安全网——基础扎实了，后面的路就好走了。`,
+                        `${score.toFixed(1)}分最积极的解读是：${name}的每一次微小进步都会非常显眼。进步显眼的人，更容易进入"进步→自信→更进步"的正向循环。`,
+                        `${name}的${score.toFixed(1)}分像一张地图上的"你在这里"标签。知道自己在哪里之后，去哪和怎么去就是选择题了——而选择题永远比填空题好做。`,
+                        `均分${score.toFixed(1)}，${name}需要的是一个能快速见效的小目标。不需要一步到位，先把最薄弱的那一个维度从红灯拉到黄灯，就已经是实实在在的进步了。`,
+                        `${score.toFixed(1)}分也许会让${name}觉得自己"不够好"，但请告诉ta：你不需要跟任何人比，你只需要比昨天的自己多做对一件事，就已经赢了。`,
+                        `${name}的${score.toFixed(1)}分不是一道判决，而是一份诊断书。诊断的目的从来不是宣判，而是治疗——只要方向对，什么时候出发都不晚。`,
+                        `均分${score.toFixed(1)}，${name}最聪明的一步就是现在开始行动。不要求多，不要求快，每一天只盯一个点，积累100天就是翻天覆地的变化。`,
+                        `${score.toFixed(1)}分，${name}就像一颗还没破土的种子——泥底下已经在生根了，只是地面上还看不见。请给根一点时间，它会在你不经意的时候钻出地面。`,
+                        `${name}的${score.toFixed(1)}分不是一个终点标签，而是一个起点坐标。起点的意义不在于它高不高，而在于它告诉我们"从这里出发，走哪条路最值得"。`,
+                        `均分${score.toFixed(1)}，${name}最需要的是被看见、被肯定、被相信。一个被相信的孩子，会爆发出连ta自己都惊讶的能量——而这份报告的第一条建议，就是"请相信ta"。`,
+                        `${score.toFixed(1)}分不是${name}的定论，而是ta学习力成长故事的序章。好的序章不会告诉读者结局是什么，但会让读者好奇接下来会发生什么——我们现在就对这个故事充满期待。`,
+                        `均分${score.toFixed(1)}，${name}的过程比分数更重要。学习力测评的意义不是给孩子打分，而是帮ta画一张"成长地图"——地图上没有失败，只有路线和下一个目的地。`,
+                        `${name}的${score.toFixed(1)}分是ta学习力真实面貌的反映。真实是最好的起点——不美化、不粉饰，清清楚楚地知道"我现在在哪里"，才能明明白白地走向"我想去哪里"。`,
+                        `均分${score.toFixed(1)}，${name}最需要的不是"更多的练习"而是"更适合的方法"。方法对了，同样的时间产生的结果可以截然不同——这也是这份报告最有价值的地方。`,
+                        `${score.toFixed(1)}分，${name}可能正处在一个"高原期"——进步没那么快了，但也不是退步。高原期并不可怕，它只是大脑在整合已经学到的东西，为下一轮跃迁做准备。`,
+                        `均分${score.toFixed(1)}的${name}，其实比分数看起来的更有力量。因为学习力测评测的不是天赋、不是智商，而是"可改变的习惯和策略"——而习惯和策略，是完全可以被引导和重塑的。`,
+                    ];
+
+                    // 选择模板：优先用关联对（如果命中），否则用通用模板
+                    let endingSentence;
+                    if (matchedPairs.length > 0) {
+                        // 随机选一个命中的关联对
+                        const matchedPair = pick(matchedPairs);
+                        endingSentence = makePairSentence(matchedPair);
+                    } else {
+                        // 没有命中关联对，用通用模板
+                        let generalPool;
+                        if (gap > 1) {
+                            generalPool = generalTemplatesHigh;
+                        } else if (gap < -1) {
+                            generalPool = generalTemplatesLow;
+                        } else {
+                            generalPool = generalTemplatesMid;
+                        }
+                        endingSentence = pick(generalPool);
+                    }
+                    parts.push('\n' + endingSentence);
+                    parts.push('');
+
+                    return parts.join('');
+                },
+                filteredDimensions() {
+                    let list = this.dimFilter === 'all' ? [...this.dimensions] : this.dimensions.filter(d => d.status === this.dimFilter);
+                    if (this.dimSort.key) {
+                        const order = this.dimSort.order === 'asc' ? 1 : -1;
+                        list.sort((a, b) => (a[this.dimSort.key] - b[this.dimSort.key]) * order);
+                    }
+                    return list;
+                },
+                // 图表分类选项
+                chartCategories() {
+                    return [
+                        { key: '动力', label: '学习动力', count: this.catCount('动力') },
+                        { key: '策略', label: '学习策略', count: this.catCount('策略') },
+                        { key: '习惯', label: '学习习惯', count: this.catCount('习惯') },
+                    ];
+                },
+                chartDimensions() {
+                    if (!this.chartCat) return this.dimensions;
+                    return this.dimensions.filter(d => d.category && d.category.includes(this.chartCat));
+                }
+            },
+            watch: {
+                chartCat() {
+                    this.$nextTick(() => {
+                        this.renderBarChart();
+                        this.renderTrendChart();
+                    });
+                },
+                categoryRadarCat() {
+                    this.$nextTick(() => {
+                        this.renderCategoryRadarChart();
+                    });
+                },
+            },
+            methods: {
+                navTo(target, filter) {
+                    if (target === 'dimTable') {
+                        this.dimFilter = filter || 'all';
+                        this.$nextTick(() => {
+                            const el = this.$refs.dimTable;
+                            if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                        });
+                    } else if (target === 'charts') {
+                        this.$nextTick(() => {
+                            const el = this.$refs.charts;
+                            if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                        });
+                    } else if (target === 'advice') {
+                        this.adviceFilter = filter || 'all';
+                        this.$nextTick(() => {
+                            const el = this.$refs.adviceSection;
+                            if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                        });
+                    }
+                },
+                scrollToTop() {
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                },
+                handleScroll() {
+                    this.showBackTop = window.scrollY > 400;
+                },
+                switchChartCat(key) {
+                    this.chartCat = key;
+                },
+                switchCategoryRadarCat(key) {
+                    this.categoryRadarCat = key;
+                },
+                toggleSort(key) {
+                    if (this.dimSort.key === key) {
+                        this.dimSort.order = this.dimSort.order === 'asc' ? 'desc' : 'asc';
+                    } else {
+                        this.dimSort.key = key;
+                        this.dimSort.order = 'desc';
+                    }
+                },
+
+                triggerPdfUpload() { this.$refs.pdfInput.click(); },
+
+                onPdfSelect(e) {
+                    const file = e.target.files[0];
+                    if (!file) return;
+                    if (file.type !== 'application/pdf') {
+                        this.parseError = '解析失败：未能从报告中提取到数据，请确认您上传的文件是标准的学习力综合测评报告';
+                        ElMessage.error(this.parseError);
+                        e.target.value = '';
+                        return;
+                    }
+                    this.pdfFile = file;
+                    this.parseError = '';
+                },
+                onPdfDrop(e) {
+                    const file = e.dataTransfer.files[0];
+                    if (file && file.type === 'application/pdf') {
+                        this.pdfFile = file;
+                        this.parseError = '';
+                    }
+                },
+
+                resetAll() {
+                    this.pdfFile = null;
+                    this.analyzing = false;
+                    this.parseError = '';
+                    this.resultReady = false;
+                    this.aiStep = 0;
+                    this.studentInfo = { name:'', grade:'', school:'', city:'', date:'' };
+                    this.dimensions = [];
+                    this.dimFilter = 'all';
+                    this.dimSort = { key: '', order: 'desc' };
+                    this.adviceFilter = 'all';
+                    this.chartCat = '动力';
+                    this.categoryRadarCat = '动力';
+                    if (this.$refs.pdfInput) this.$refs.pdfInput.value = '';
+                },
+
+                // 延迟辅助函数，让AI动画步骤有节奏感
+                sleep(ms) {
+                    return new Promise(resolve => setTimeout(resolve, ms));
+                },
+
+                async startAnalyze() {
+                    if (!this.pdfFile || this.analyzing) return;
+                    // 文件预检：格式不对则立即返回，不走进度条
+                    if (this.pdfFile.type !== 'application/pdf') {
+                        this.parseError = '解析失败：未能从报告中提取到数据，请确认您上传的文件是标准的学习力综合测评报告';
+                        ElMessage.error(this.parseError);
+                        return;
+                    }
+                    this.analyzing = true;
+                    this.parseError = '';
+                    this.resultReady = false;
+
+                    try {
+                        // 先读取PDF并快速校验内容，不合法则立即退出，不走进度条
+                        const arrayBuffer = await this.pdfFile.arrayBuffer();
+                        const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+                        let fullText = '';
+                        let rawText = '';  // 原始item文本（不按行重建），用于降级匹配
+                        for (let i = 1; i <= pdf.numPages; i++) {
+                            const page = await pdf.getPage(i);
+                            const content = await page.getTextContent();
+                            // 根据Y坐标重建行结构，避免文本粘连
+                            const items = content.items;
+                            let lines = [];
+                            let currentY = null;
+                            let currentLine = [];
+                            for (const item of items) {
+                                rawText += item.str;
+                                const y = Math.round(item.transform[5] * 10) / 10;
+                                if (currentY === null) {
+                                    currentLine = [item];
+                                    currentY = y;
+                                } else if (Math.abs(y - currentY) < 2) {
+                                    currentLine.push(item);
+                                } else {
+                                    if (currentLine.length > 0) {
+                                        lines.push(currentLine.map(it => it.str).join(' '));
+                                    }
+                                    currentLine = [item];
+                                    currentY = y;
+                                }
+                            }
+                            if (currentLine.length > 0) {
+                                lines.push(currentLine.map(it => it.str).join(' '));
+                            }
+                            fullText += lines.join('\n') + '\n';
+                        }
+
+                        // 快速校验：文本中是否包含测评维度关键词，不合法直接退出不走进度
+                        const dimNames = DIMENSION_CONFIG.map(d => d.name);
+                        const hitCount = dimNames.filter(n => fullText.includes(n)).length;
+                        if (hitCount < 3) {
+                            throw new Error('未能从报告中提取到数据，请确认您上传的文件是标准的学习力综合测评报告');
+                        }
+
+                        // 校验通过，开始走AI进度动画
+                        this.aiStep = 0;
+                        await this.sleep(400);
+                        this.aiStep = 1;
+                        await this.sleep(600);
+
+                        // 步骤2：AI解析学生信息
+                        this.aiStep = 2;
+                        await this.sleep(700);
+                        this.extractStudentInfo(fullText, rawText);
+
+                        // 步骤3：AI提取28维度数据
+                        this.aiStep = 3;
+                        await this.sleep(700);
+                        this.extractScores(fullText);
+
+                        // 步骤4：AI生成诊断分析
+                        this.aiStep = 4;
+                        await this.sleep(800);
+                        this.classifyDimensions();
+
+                        this.resultReady = true;
+
+                        // 渲染图表
+                        this.$nextTick(() => {
+                            this.renderCharts();
+                        });
+
+                        const sname = this.studentInfo.name || '学生';
+                        ElMessage.success(`成功解读「${sname}」的测评报告！`);
+                    } catch (err) {
+                        console.error(err);
+                        this.parseError = '解析失败：' + (err.message || '未知错误，请确认PDF格式正确');
+                        ElMessage.error('解析失败，请检查报告文件');
+                    } finally {
+                        this.analyzing = false;
+                        if (this.parseError) this.aiStep = 0;
+                    }
+                },
+
+                extractStudentInfo(text, rawItemsText) {
+                    // 用行首匹配，避免跨行捕获到多余内容
+                    const getField = (label) => {
+                        const regex = new RegExp(`${label}[：:]\\s*([^\\n]+)`, 'm');
+                        const m = text.match(regex);
+                        return m ? m[1].trim() : '';
+                    };
+                    this.studentInfo.name = getField('姓名');
+                    this.studentInfo.grade = getField('年级');
+                    this.studentInfo.school = getField('学校');
+                    this.studentInfo.city = getField('城市');
+
+                    // 日期提取：多种策略逐级降级
+                    let dateResult = '';
+                    // 策略1：完整"测评日期"（含多种Unicode变体：日U+65E5 ⽇U+2F47）
+                    const p1 = /测评[日期⽇][日期⽇]?[：:]\s*([^\n]+)/m;
+                    let m = text.match(p1);
+                    if (m) dateResult = m[1].trim();
+
+                    // 策略2："测评"和"日期"可能因PDF重建被拆到不同行
+                    if (!dateResult) {
+                        const p2 = /测评\s*\n\s*[日期⽇][日期⽇]?[：:]\s*([^\n]+)/m;
+                        m = text.match(p2);
+                        if (m) dateResult = m[1].trim();
+                    }
+
+                    // 策略3：仅匹配"日期"（不管前面是否有"测评"）
+                    if (!dateResult) {
+                        const p3 = /[日期⽇][日期⽇]?[：:]\s*([^\n]+)/m;
+                        m = text.match(p3);
+                        if (m) dateResult = m[1].trim();
+                    }
+
+                    // 策略4：在原始文本（不换行）中查找日期
+                    if (!dateResult && rawItemsText) {
+                        const p4 = /([日⽇]期)[：:]?\s*(\d{4}[年.\-/]\d{1,2}[月.\-/]\d{1,2}[日號]?)/;
+                        m = rawItemsText.match(p4);
+                        if (m) dateResult = m[2].trim();
+                    }
+
+                    // 策略5：全文查找日期格式（YYYY-MM-DD 或 YYYY年MM月DD日）
+                    if (!dateResult) {
+                        const p5 = /(20\d{2}[年.\-/]\d{1,2}[月.\-/]\d{1,2}[日號]?)/;
+                        m = text.match(p5);
+                        if (m) dateResult = m[1].trim();
+                    }
+
+                    this.studentInfo.date = dateResult;
+                    console.log('[日期提取] 结果:', dateResult || '(未找到)');
+                },
+
+                extractScores(text) {
+                    // 方法1：查找所有"我的得分：X.X分"和"平均得分：X.X分"的配对
+                    const scorePattern = /我的得分[：:]\s*([\d.]+)分[\s\S]*?平均得分[：:]\s*([\d.]+)分/g;
+                    const matches = [];
+                    let match;
+                    while ((match = scorePattern.exec(text)) !== null) {
+                        matches.push({
+                            score: parseFloat(match[1]),
+                            avg: parseFloat(match[2])
+                        });
+                    }
+
+                    console.log('找到', matches.length, '组分数数据');
+
+                    if (matches.length >= 28) {
+                        // 按照PDF顺序匹配到28个维度
+                        this.dimensions = DIMENSION_CONFIG.map((config, index) => ({
+                            ...config,
+                            score: matches[index].score,
+                            avg: matches[index].avg,
+                            diff: matches[index].score - matches[index].avg,
+                            status: ''
+                        }));
+                    } else if (matches.length > 0) {
+                        // 分数不够28个，尝试逐个单独提取
+                        const individualPattern = /我的得分[：:]\s*([\d.]+)分/g;
+                        const avgPattern = /平均得分[：:]\s*([\d.]+)分/g;
+                        const scores = [...text.matchAll(individualPattern)].map(m => parseFloat(m[1]));
+                        const avgs = [...text.matchAll(avgPattern)].map(m => parseFloat(m[1]));
+
+                        const count = Math.min(DIMENSION_CONFIG.length, scores.length, avgs.length);
+                        this.dimensions = DIMENSION_CONFIG.slice(0, count).map((config, i) => ({
+                            ...config,
+                            score: scores[i],
+                            avg: avgs[i],
+                            diff: scores[i] - avgs[i],
+                            status: ''
+                        }));
+                    } else {
+                        throw new Error('未能从报告中提取到数据，请确认您上传的文件是标准的学习力综合测评报告');
+                    }
+                },
+
+
+                classifyDimensions() {
+                    this.dimensions.forEach(d => {
+                        const diff = d.diff;
+                        if (diff < -1) {
+                            d.status = 'urgent';
+                        } else if (diff >= -1 && diff <= 1) {
+                            d.status = 'improve';
+                        } else {
+                            d.status = 'good';
+                        }
+                    });
+                },
+
+                getStatusClass(status) {
+                    if (status === 'urgent') return 'urgent';
+                    if (status === 'improve') return 'improve';
+                    return 'good';
+                },
+
+                catCount(catKey) {
+                    return this.dimensions.filter(d => d.category && d.category.includes(catKey)).length;
+                },
+
+                getAdviceText(d) {
+                    const kb = ADVICE_KB[d.name];
+                    let raw = '';
+                    if (kb) {
+                        raw = kb[d.status] || kb.improve || '请根据得分情况制定个性化提升方案';
+                    } else if (d.status === 'urgent') {
+                        raw = `【急需提升】${d.name}得分(${d.score.toFixed(1)})显著低于常模均值(${d.avg.toFixed(1)})，差值为${d.diff.toFixed(1)}。建议：重点加强该维度的训练，寻找专业指导师进行针对性辅导。`;
+                    } else if (d.status === 'improve') {
+                        raw = `【有待提升】${d.name}得分(${d.score.toFixed(1)})接近常模均值(${d.avg.toFixed(1)})。建议：在日常学习中有意识地加强该维度的练习，逐步缩小差距。`;
+                    } else {
+                        raw = `【继续保持】${d.name}得分(${d.score.toFixed(1)})高于常模均值(${d.avg.toFixed(1)})。建议：继续保持并发挥带动作用。`;
+                    }
+                    // 清理冗余前缀，只保留建议内容
+                    let cleaned = raw.replace(/^【[^】]+】/, '').trim();
+                    const idx = cleaned.search(/建议[：:]/);
+                    if (idx >= 0) {
+                        cleaned = cleaned.substring(idx).replace(/^建议[：:]?\s*/, '');
+                    }
+                    // 在序号前插入换行（支持①②③④⑤⑥⑦⑧⑨⑩）
+                    cleaned = cleaned.replace(/[①②③④⑤⑥⑦⑧⑨⑩]/g, '\n$&');
+                    // 去掉开头的多余换行
+                    cleaned = cleaned.replace(/^\n/, '');
+                    return cleaned || '请根据得分情况制定个性化提升方案';
+                },
+
+                renderCharts() {
+                    this.renderRadarChart();
+                    this.renderCategoryRadarChart();
+                    this.renderBarChart();
+                    this.renderTrendChart();
+                },
+
+                renderRadarChart() {
+                    const chartDom = document.getElementById('radarChart');
+                    if (!chartDom) return;
+                    let chart = echarts.getInstanceByDom(chartDom);
+                    if (!chart) {
+                        chart = echarts.init(chartDom);
+                        window.addEventListener('resize', () => chart.resize());
+                    }
+
+                    // 按维度顺序分组
+                    const dimNames = this.dimensions.map(d => d.name);
+                    const scores = this.dimensions.map(d => d.score);
+                    const avgs = this.dimensions.map(d => d.avg);
+
+                    const option = {
+                        animation: true,
+                        animationDuration: 1200,
+                        animationEasing: 'cubicOut',
+                        animationDelay: (idx) => idx * 30,
+                        tooltip: { show: false },
+                        legend: { show: false },
+                        radar: {
+                            center: ['50%', '48%'],
+                            radius: '68%',
+                            indicator: dimNames.map(n => ({ name: n, max: 10 })),
+                            axisName: {
+                                fontSize: 8,
+                                lineHeight: 12,
+                                formatter: (name) => {
+                                    const idx = dimNames.indexOf(name);
+                                    if (idx < 0) return name;
+                                    const sc = scores[idx].toFixed(1);
+                                    const av = avgs[idx].toFixed(1);
+                                    return `{dim|${name}}{bk|(}{sv|${sc}}{sep||}{av|${av}}{bk|)}`;
+                                },
+                                rich: {
+                                    dim: { fontSize: 8, color: '#606266', lineHeight: 12 },
+                                    bk: { fontSize: 8, color: '#909399', lineHeight: 12 },
+                                    sv: { fontSize: 7, color: '#6366F1', lineHeight: 12 },
+                                    sep: { fontSize: 7, color: '#909399', lineHeight: 12 },
+                                    av: { fontSize: 7, color: '#F59E0B', lineHeight: 12 }
+                                }
+                            },
+                            splitArea: {
+                                areaStyle: { color: ['rgba(99,102,241,0.02)', 'rgba(99,102,241,0.04)', 'rgba(99,102,241,0.02)', 'rgba(99,102,241,0.04)', 'rgba(99,102,241,0.02)'] }
+                            }
+                        },
+                        series: [{
+                            name: '学习力维度',
+                            type: 'radar',
+                            data: [
+                                {
+                                    value: scores,
+                                    name: '学生得分',
+                                    lineStyle: { color: '#6366F1', width: 2.5 },
+                                    areaStyle: { color: 'rgba(99,102,241,0.2)' },
+                                    itemStyle: { color: '#6366F1' },
+                                    symbol: 'circle',
+                                    symbolSize: 5,
+                                },
+                                {
+                                    value: avgs,
+                                    name: '常模均值',
+                                    lineStyle: { color: '#F59E0B', width: 2, type: 'dashed' },
+                                    areaStyle: { color: 'rgba(245,158,11,0.08)' },
+                                    itemStyle: { color: '#F59E0B' },
+                                    symbol: 'diamond',
+                                    symbolSize: 4,
+                                }
+                            ]
+                        }]
+                    };
+                    chart.setOption(option, true);
+                    // 点击雷达外圈显示对应数据
+                },
+
+                renderCategoryRadarChart() {
+                    const chartDom = document.getElementById('categoryRadarChart');
+                    if (!chartDom) return;
+                    let chart = echarts.getInstanceByDom(chartDom);
+                    if (!chart) {
+                        chart = echarts.init(chartDom);
+                        window.addEventListener('resize', () => chart.resize());
+                    }
+
+                    // 根据当前选中的分类，筛选该分类的所有维度
+                    const catKey = this.categoryRadarCat;
+                    const dims = this.dimensions.filter(d => d.category && d.category.includes(catKey));
+                    if (dims.length === 0) return;
+
+                    const dimNames = dims.map(d => d.name);
+                    const scores = dims.map(d => d.score);
+                    const avgs = dims.map(d => d.avg);
+
+                    const catLabels = { '动力': '学习动力', '策略': '学习策略', '习惯': '学习习惯' };
+                    const catColors = { '动力': '#6366F1', '策略': '#10B981', '习惯': '#F59E0B' };
+                    const catFills = { '动力': 'rgba(99,102,241,0.2)', '策略': 'rgba(16,185,129,0.2)', '习惯': 'rgba(245,158,11,0.2)' };
+                    const c = catColors[catKey] || '#6366F1';
+                    const fill = catFills[catKey] || 'rgba(99,102,241,0.2)';
+
+                    const option = {
+                        tooltip: { show: false },
+                        legend: { show: false },
+                        radar: {
+                            center: ['50%', '48%'],
+                            radius: '68%',
+                            indicator: dimNames.map(n => ({ name: n, max: 10 })),
+                            axisName: {
+                                fontSize: 8,
+                                lineHeight: 12,
+                                formatter: (name) => {
+                                    const idx = dimNames.indexOf(name);
+                                    if (idx < 0) return name;
+                                    const sc = scores[idx].toFixed(1);
+                                    const av = avgs[idx].toFixed(1);
+                                    return `{dim|${name}}{bk|(}{sv|${sc}}{sep||}{av|${av}}{bk|)}`;
+                                },
+                                rich: {
+                                    dim: { fontSize: 8, color: '#606266', lineHeight: 12 },
+                                    bk: { fontSize: 8, color: '#909399', lineHeight: 12 },
+                                    sv: { fontSize: 7, color: c, lineHeight: 12 },
+                                    sep: { fontSize: 7, color: '#909399', lineHeight: 12 },
+                                    av: { fontSize: 7, color: '#94A3B8', lineHeight: 12 }
+                                }
+                            },
+                            splitArea: {
+                                areaStyle: { color: ['rgba(99,102,241,0.02)', 'rgba(99,102,241,0.04)', 'rgba(99,102,241,0.02)', 'rgba(99,102,241,0.04)', 'rgba(99,102,241,0.02)'] }
+                            }
+                        },
+                        series: [{
+                            name: catLabels[catKey] || '分类维度',
+                            type: 'radar',
+                            data: [
+                                {
+                                    value: scores,
+                                    name: '学生得分',
+                                    lineStyle: { color: c, width: 2.5 },
+                                    areaStyle: { color: fill },
+                                    itemStyle: { color: c },
+                                    symbol: 'circle',
+                                    symbolSize: 5,
+                                },
+                                {
+                                    value: avgs,
+                                    name: '常模均值',
+                                    lineStyle: { color: '#94A3B8', width: 2, type: 'dashed' },
+                                    areaStyle: { color: 'rgba(148,163,184,0.08)' },
+                                    itemStyle: { color: '#94A3B8' },
+                                    symbol: 'diamond',
+                                    symbolSize: 4,
+                                }
+                            ]
+                        }]
+                    };
+                    chart.setOption(option, true);
+                    // 点击分类雷达外圈显示对应数据
+                },
+
+                renderBarChart() {
+                    const chartDom = document.getElementById('barChart');
+                    if (!chartDom) return;
+                    let chart = echarts.getInstanceByDom(chartDom);
+                    if (!chart) {
+                        chart = echarts.init(chartDom);
+                        window.addEventListener('resize', () => chart.resize());
+                    }
+                    const data = this.chartDimensions;
+
+                    const option = {
+                        tooltip: {
+                            trigger: 'axis',
+                            axisPointer: { type: 'shadow' },
+                            formatter: (params) => {
+                                const d = data[params[0].dataIndex];
+                                let html = `<strong>${d.name}</strong>（${d.parent}）<br/>`;
+                                params.forEach(p => {
+                                    html += `${p.marker} ${p.seriesName}: ${p.value.toFixed(1)}<br/>`;
+                                });
+                                html += `差值: ${d.diff >= 0 ? '+' : ''}${d.diff.toFixed(1)}`;
+                                return html;
+                            }
+                        },
+                        legend: {
+                            data: ['学生得分', '常模均值'],
+                            top: 0,
+                        },
+                        grid: { left: 60, right: 20, top: 40, bottom: 80 },
+                        xAxis: {
+                            type: 'category',
+                            data: data.map(d => d.name),
+                            axisLabel: { rotate: 45, fontSize: 10, interval: 0 },
+                        },
+                        yAxis: {
+                            type: 'value',
+                            name: '得分',
+                            min: 0,
+                            max: 10,
+                            interval: 1,
+                        },
+                        series: [
+                            {
+                                name: '学生得分',
+                                type: 'bar',
+                                data: data.map(d => ({
+                                    value: d.score,
+                                    itemStyle: {
+                                        color: d.status === 'urgent' ? '#f56c6c' :
+                                               d.status === 'improve' ? '#e6a23c' : '#67c23a'
+                                    }
+                                })),
+                                barWidth: 18,
+                                emphasis: { itemStyle: { color: '#409EFF' } }
+                            },
+                            {
+                                name: '常模均值',
+                                type: 'bar',
+                                data: data.map(d => ({
+                                    value: d.avg,
+                                    itemStyle: { color: '#c0c4cc' }
+                                })),
+                                barWidth: 18,
+                                barGap: '20%',
+                                itemStyle: { borderRadius: [4,4,0,0] }
+                            }
+                        ]
+                    };
+                    chart.setOption(option, true);
+                },
+
+                renderTrendChart() {
+                    const chartDom = document.getElementById('trendChart');
+                    if (!chartDom) return;
+                    let chart = echarts.getInstanceByDom(chartDom);
+                    if (!chart) {
+                        chart = echarts.init(chartDom);
+                        window.addEventListener('resize', () => chart.resize());
+                    }
+                    const data = this.chartDimensions;
+
+                    const option = {
+                        tooltip: {
+                            trigger: 'axis',
+                            formatter: (params) => {
+                                const d = data[params[0].dataIndex];
+                                return `<strong>${d.name}</strong>（${d.parent}）<br/>
+                                    差值: ${d.diff >= 0 ? '+' : ''}${d.diff.toFixed(1)}<br/>
+                                    学生: ${d.score.toFixed(1)} | 常模: ${d.avg.toFixed(1)}`;
+                            }
+                        },
+                        grid: { left: 60, right: 40, top: 20, bottom: 80 },
+                        xAxis: {
+                            type: 'category',
+                            data: data.map(d => d.name),
+                            axisLabel: { rotate: 45, fontSize: 10, interval: 0 },
+                        },
+                        yAxis: {
+                            type: 'value',
+                            name: '差值',
+                            axisLabel: { formatter: '{value}' }
+                        },
+                        series: [{
+                            name: '差值（得分-均值）',
+                            type: 'bar',
+                            data: data.map(d => ({
+                                value: parseFloat(d.diff.toFixed(1)),
+                                itemStyle: {
+                                    color: d.diff > 1 ? '#67c23a' :
+                                           d.diff < -1 ? '#f56c6c' : '#e6a23c'
+                                }
+                            })),
+                            markLine: {
+                                data: [
+                                    { yAxis: 1, label: { formatter: '超常模1分' }, lineStyle: { color: '#67c23a', type: 'dashed' } },
+                                    { yAxis: -1, label: { formatter: '低常模1分' }, lineStyle: { color: '#f56c6c', type: 'dashed' } },
+                                    { yAxis: 0, label: { formatter: '常模线' }, lineStyle: { color: '#909399', type: 'solid' } }
+                                ],
+                                silent: false,
+                            }
+                        }]
+                    };
+                    chart.setOption(option, true);
+                },
+            },
+            mounted() {
+                window.addEventListener('scroll', this.handleScroll);
+            },
+            beforeUnmount() {
+                window.removeEventListener('scroll', this.handleScroll);
+            }
+        });
+
+        app.use(ElementPlus);
+        app.mount('#app');
+    </script>
+</body>
+</html>
