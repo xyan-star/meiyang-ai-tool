@@ -1,28 +1,15 @@
-# 依赖
-node_modules/
-.pnp
-.pnp.js
+# ==================== GitHub Pages 部署策略 ====================
+# 只提交网页运行必需的文件，其余辅助/开发文件保留在本地
 
-# 运行时环境文件
-.env
-.env.local
-.env.*.local
+# 先忽略所有文件（反向白名单模式）
+/*
 
-# IDE
-.idea/
-*.swp
-*.swo
-.vscode/
+# 只允许网页部署必需的文件
+!/index.html
+!/logo.png
+!/.gitignore
 
-# PDF 文件（不包含源码）
-*.pdf
-# 提取的文本文件
-pdf_extracted_text.txt
-pdf_text.txt
-
-# 依赖锁定文件（前端静态页面不需要）
-package-lock.json
-
-# 系统文件
-.DS_Store
-Thumbs.db
+# 下面这些文件可以保留在本地但不应提交
+# AI_PROMPT.md   - 开发助手提示词
+# analyze_pdf.py - Python 辅助解析脚本
+# package.json   - 仅记录依赖（前端不用 npm）
