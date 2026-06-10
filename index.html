@@ -386,12 +386,117 @@
             white-space: pre-line;
         }
 
-        /* 响应式 */
+        /* ========== 响应式：平板及以下 ========== */
         @media (max-width: 768px) {
-            .charts-grid { grid-template-columns: 1fr; }
-            .upload-section { flex-direction: column; }
-            .advice-list { grid-template-columns: 1fr; }
-            .stats-grid { grid-template-columns: 1fr 1fr; }
+            /* 顶栏 */
+            .app-header { height: 50px; padding: 0 16px; }
+            .app-header .logo-img { height: 32px; }
+
+            /* 主体 */
+            .app-main { padding: 16px; }
+
+            /* 卡片 */
+            .card { padding: 16px; }
+            .card-title { font-size: 16px; margin-bottom: 12px; padding-bottom: 10px; }
+
+            /* 上传区 */
+            .upload-box { padding: 24px 16px; }
+            .upload-box .icon { font-size: 32px; }
+
+            /* 概览统计 */
+            .stats-grid { grid-template-columns: 1fr 1fr; gap: 12px; }
+            .stat-card { padding: 16px; }
+            .stat-card .num { font-size: 28px; }
+            .stat-card .label { font-size: 12px; }
+
+            /* 综合总结 */
+            .summary-card { padding: 16px 18px; font-size: 14px; }
+            .summary-card .summary-title { font-size: 15px; }
+
+            /* 图表 */
+            .charts-grid { grid-template-columns: 1fr; gap: 16px; }
+            .chart-box { padding: 12px; }
+            .chart-box .chart-inner { height: 320px; }
+            .chart-box .chart-inner.tall { height: 360px; }
+
+            /* 建议 */
+            .advice-list { grid-template-columns: 1fr; gap: 12px; }
+            .advice-card { padding: 12px 14px; }
+            .advice-card .advice-dim { font-size: 14px; }
+            .advice-card .advice-text { font-size: 12px; }
+
+            /* 筛选选项卡 */
+            .filter-tab { padding: 5px 12px; font-size: 12px; }
+
+            /* 介绍区 */
+            .intro-section { padding: 32px 16px; }
+            .intro-section h2 { font-size: 22px; }
+            .intro-section .desc { font-size: 14px; }
+            .feature-grid { grid-template-columns: repeat(auto-fit, minmax(140px,1fr)); gap: 12px; }
+            .feature-item { padding: 16px; }
+            .feature-item .feat-icon { font-size: 24px; }
+
+            /* 学生信息 */
+            .student-info { gap: 12px; font-size: 13px; flex-direction: column; }
+
+            /* 操作按钮 */
+            .action-bar { flex-direction: column; align-items: stretch; }
+            .action-bar .btn { justify-content: center; }
+
+            /* 返回顶部 */
+            .back-to-top { bottom: 24px; right: 20px; width: 40px; height: 40px; font-size: 18px; }
+
+            /* 维度表格 */
+            .dim-table { font-size: 13px; }
+            .dim-table th, .dim-table td { padding: 8px 8px; }
+            .dim-table .bar-bg { min-width: 40px; }
+
+            /* 加载状态 */
+            .ai-loading { max-width: 100%; }
+        }
+
+        /* ========== 响应式：手机小屏幕 ========== */
+        @media (max-width: 480px) {
+            .app-main { padding: 10px; }
+            .card { padding: 12px; border-radius: 6px; }
+            .card-title { font-size: 14px; }
+
+            .stats-grid { grid-template-columns: 1fr 1fr; gap: 8px; }
+            .stat-card { padding: 12px 8px; }
+            .stat-card .num { font-size: 22px; }
+            .stat-card .label { font-size: 11px; }
+
+            .chart-box .chart-inner { height: 260px; }
+            .chart-box .chart-inner.tall { height: 300px; }
+            .chart-box { padding: 8px; border-radius: 6px; }
+
+            .summary-card { padding: 12px 14px; font-size: 13px; line-height: 1.7; }
+            .summary-card .summary-title { font-size: 14px; }
+
+            .filter-tab { padding: 4px 10px; font-size: 11px; }
+
+            .upload-box { padding: 20px 12px; }
+            .upload-box .icon { font-size: 28px; }
+
+            .intro-section { padding: 24px 12px; }
+            .intro-section h2 { font-size: 18px; }
+            .intro-section .desc { font-size: 13px; }
+
+            /* 维度表格：隐藏上级维度列以节省空间 */
+            .dim-table th:nth-child(1),
+            .dim-table td:nth-child(1) { display: none; }
+            .dim-table th, .dim-table td { padding: 6px 6px; font-size: 12px; }
+            .dim-table .bar-bg { min-width: 30px; height: 6px; }
+
+            .advice-card { padding: 10px 12px; }
+            .advice-card .advice-dim { font-size: 13px; }
+            .advice-card .advice-text { font-size: 12px; }
+            .advice-card .advice-parent { font-size: 10px; }
+
+            .back-to-top { bottom: 16px; right: 16px; width: 36px; height: 36px; font-size: 16px; }
+
+            .feature-grid { grid-template-columns: 1fr 1fr; gap: 8px; }
+            .feature-item { padding: 12px 8px; }
         }
 
         /* 加载状态 */
@@ -1064,6 +1169,10 @@
         // ==================== Vue 应用 ====================
         const { createApp } = Vue;
         const { ElMessage } = ElementPlus;
+
+        // 移动端检测
+        const isMobile = () => window.innerWidth <= 768;
+        const isSmallMobile = () => window.innerWidth <= 480;
 
         const app = createApp({
             data() {
@@ -1782,6 +1891,10 @@
                         window.addEventListener('resize', () => chart.resize());
                     }
 
+                    // 移动端适配
+                    const mob = isMobile();
+                    const sm = isSmallMobile();
+
                     // 按维度顺序分组
                     const dimNames = this.dimensions.map(d => d.name);
                     const scores = this.dimensions.map(d => d.score);
@@ -1796,11 +1909,11 @@
                         legend: { show: false },
                         radar: {
                             center: ['50%', '48%'],
-                            radius: '68%',
+                            radius: sm ? '55%' : (mob ? '62%' : '68%'),
                             indicator: dimNames.map(n => ({ name: n, max: 10 })),
                             axisName: {
-                                fontSize: 8,
-                                lineHeight: 12,
+                                fontSize: mob ? 7 : 8,
+                                lineHeight: mob ? 10 : 12,
                                 formatter: (name) => {
                                     const idx = dimNames.indexOf(name);
                                     if (idx < 0) return name;
@@ -1809,11 +1922,11 @@
                                     return `{dim|${name}}{bk|(}{sv|${sc}}{sep||}{av|${av}}{bk|)}`;
                                 },
                                 rich: {
-                                    dim: { fontSize: 8, color: '#606266', lineHeight: 12 },
-                                    bk: { fontSize: 8, color: '#909399', lineHeight: 12 },
-                                    sv: { fontSize: 7, color: '#6366F1', lineHeight: 12 },
-                                    sep: { fontSize: 7, color: '#909399', lineHeight: 12 },
-                                    av: { fontSize: 7, color: '#F59E0B', lineHeight: 12 }
+                                    dim: { fontSize: mob ? 7 : 8, color: '#606266', lineHeight: mob ? 10 : 12 },
+                                    bk: { fontSize: mob ? 7 : 8, color: '#909399', lineHeight: mob ? 10 : 12 },
+                                    sv: { fontSize: mob ? 6 : 7, color: '#6366F1', lineHeight: mob ? 10 : 12 },
+                                    sep: { fontSize: mob ? 6 : 7, color: '#909399', lineHeight: mob ? 10 : 12 },
+                                    av: { fontSize: mob ? 6 : 7, color: '#F59E0B', lineHeight: mob ? 10 : 12 }
                                 }
                             },
                             splitArea: {
@@ -1827,26 +1940,25 @@
                                 {
                                     value: scores,
                                     name: '学生得分',
-                                    lineStyle: { color: '#6366F1', width: 2.5 },
+                                    lineStyle: { color: '#6366F1', width: mob ? 2 : 2.5 },
                                     areaStyle: { color: 'rgba(99,102,241,0.2)' },
                                     itemStyle: { color: '#6366F1' },
                                     symbol: 'circle',
-                                    symbolSize: 5,
+                                    symbolSize: mob ? 3 : 5,
                                 },
                                 {
                                     value: avgs,
                                     name: '常模均值',
-                                    lineStyle: { color: '#F59E0B', width: 2, type: 'dashed' },
+                                    lineStyle: { color: '#F59E0B', width: mob ? 1.5 : 2, type: 'dashed' },
                                     areaStyle: { color: 'rgba(245,158,11,0.08)' },
                                     itemStyle: { color: '#F59E0B' },
                                     symbol: 'diamond',
-                                    symbolSize: 4,
+                                    symbolSize: mob ? 3 : 4,
                                 }
                             ]
                         }]
                     };
                     chart.setOption(option, true);
-                    // 点击雷达外圈显示对应数据
                 },
 
                 renderCategoryRadarChart() {
@@ -1857,6 +1969,10 @@
                         chart = echarts.init(chartDom);
                         window.addEventListener('resize', () => chart.resize());
                     }
+
+                    // 移动端适配
+                    const mob = isMobile();
+                    const sm = isSmallMobile();
 
                     // 根据当前选中的分类，筛选该分类的所有维度
                     const catKey = this.categoryRadarCat;
@@ -1878,11 +1994,11 @@
                         legend: { show: false },
                         radar: {
                             center: ['50%', '48%'],
-                            radius: '68%',
+                            radius: sm ? '55%' : (mob ? '62%' : '68%'),
                             indicator: dimNames.map(n => ({ name: n, max: 10 })),
                             axisName: {
-                                fontSize: 8,
-                                lineHeight: 12,
+                                fontSize: mob ? 7 : 8,
+                                lineHeight: mob ? 10 : 12,
                                 formatter: (name) => {
                                     const idx = dimNames.indexOf(name);
                                     if (idx < 0) return name;
@@ -1891,11 +2007,11 @@
                                     return `{dim|${name}}{bk|(}{sv|${sc}}{sep||}{av|${av}}{bk|)}`;
                                 },
                                 rich: {
-                                    dim: { fontSize: 8, color: '#606266', lineHeight: 12 },
-                                    bk: { fontSize: 8, color: '#909399', lineHeight: 12 },
-                                    sv: { fontSize: 7, color: c, lineHeight: 12 },
-                                    sep: { fontSize: 7, color: '#909399', lineHeight: 12 },
-                                    av: { fontSize: 7, color: '#94A3B8', lineHeight: 12 }
+                                    dim: { fontSize: mob ? 7 : 8, color: '#606266', lineHeight: mob ? 10 : 12 },
+                                    bk: { fontSize: mob ? 7 : 8, color: '#909399', lineHeight: mob ? 10 : 12 },
+                                    sv: { fontSize: mob ? 6 : 7, color: c, lineHeight: mob ? 10 : 12 },
+                                    sep: { fontSize: mob ? 6 : 7, color: '#909399', lineHeight: mob ? 10 : 12 },
+                                    av: { fontSize: mob ? 6 : 7, color: '#94A3B8', lineHeight: mob ? 10 : 12 }
                                 }
                             },
                             splitArea: {
@@ -1909,26 +2025,25 @@
                                 {
                                     value: scores,
                                     name: '学生得分',
-                                    lineStyle: { color: c, width: 2.5 },
+                                    lineStyle: { color: c, width: mob ? 2 : 2.5 },
                                     areaStyle: { color: fill },
                                     itemStyle: { color: c },
                                     symbol: 'circle',
-                                    symbolSize: 5,
+                                    symbolSize: mob ? 3 : 5,
                                 },
                                 {
                                     value: avgs,
                                     name: '常模均值',
-                                    lineStyle: { color: '#94A3B8', width: 2, type: 'dashed' },
+                                    lineStyle: { color: '#94A3B8', width: mob ? 1.5 : 2, type: 'dashed' },
                                     areaStyle: { color: 'rgba(148,163,184,0.08)' },
                                     itemStyle: { color: '#94A3B8' },
                                     symbol: 'diamond',
-                                    symbolSize: 4,
+                                    symbolSize: mob ? 3 : 4,
                                 }
                             ]
                         }]
                     };
                     chart.setOption(option, true);
-                    // 点击分类雷达外圈显示对应数据
                 },
 
                 renderBarChart() {
@@ -1939,6 +2054,10 @@
                         chart = echarts.init(chartDom);
                         window.addEventListener('resize', () => chart.resize());
                     }
+
+                    // 移动端适配
+                    const mob = isMobile();
+                    const sm = isSmallMobile();
                     const data = this.chartDimensions;
 
                     const option = {
@@ -1958,12 +2077,19 @@
                         legend: {
                             data: ['学生得分', '常模均值'],
                             top: 0,
+                            itemWidth: sm ? 16 : 20,
+                            itemHeight: sm ? 12 : 14,
                         },
-                        grid: { left: 60, right: 20, top: 40, bottom: 80 },
+                        grid: {
+                            left: sm ? 40 : (mob ? 50 : 60),
+                            right: sm ? 10 : (mob ? 16 : 20),
+                            top: sm ? 34 : (mob ? 38 : 40),
+                            bottom: sm ? 60 : (mob ? 70 : 80)
+                        },
                         xAxis: {
                             type: 'category',
                             data: data.map(d => d.name),
-                            axisLabel: { rotate: 45, fontSize: 10, interval: 0 },
+                            axisLabel: { rotate: sm ? 60 : (mob ? 50 : 45), fontSize: sm ? 8 : (mob ? 9 : 10), interval: 0 },
                         },
                         yAxis: {
                             type: 'value',
@@ -1983,7 +2109,7 @@
                                                d.status === 'improve' ? '#e6a23c' : '#67c23a'
                                     }
                                 })),
-                                barWidth: 18,
+                                barWidth: sm ? 12 : (mob ? 14 : 18),
                                 emphasis: { itemStyle: { color: '#409EFF' } }
                             },
                             {
@@ -1993,7 +2119,7 @@
                                     value: d.avg,
                                     itemStyle: { color: '#c0c4cc' }
                                 })),
-                                barWidth: 18,
+                                barWidth: sm ? 12 : (mob ? 14 : 18),
                                 barGap: '20%',
                                 itemStyle: { borderRadius: [4,4,0,0] }
                             }
@@ -2010,6 +2136,10 @@
                         chart = echarts.init(chartDom);
                         window.addEventListener('resize', () => chart.resize());
                     }
+
+                    // 移动端适配
+                    const mob = isMobile();
+                    const sm = isSmallMobile();
                     const data = this.chartDimensions;
 
                     const option = {
@@ -2022,11 +2152,16 @@
                                     学生: ${d.score.toFixed(1)} | 常模: ${d.avg.toFixed(1)}`;
                             }
                         },
-                        grid: { left: 60, right: 40, top: 20, bottom: 80 },
+                        grid: {
+                            left: sm ? 40 : (mob ? 50 : 60),
+                            right: sm ? 20 : (mob ? 30 : 40),
+                            top: sm ? 14 : (mob ? 16 : 20),
+                            bottom: sm ? 60 : (mob ? 70 : 80)
+                        },
                         xAxis: {
                             type: 'category',
                             data: data.map(d => d.name),
-                            axisLabel: { rotate: 45, fontSize: 10, interval: 0 },
+                            axisLabel: { rotate: sm ? 60 : (mob ? 50 : 45), fontSize: sm ? 8 : (mob ? 9 : 10), interval: 0 },
                         },
                         yAxis: {
                             type: 'value',
@@ -2043,6 +2178,7 @@
                                            d.diff < -1 ? '#f56c6c' : '#e6a23c'
                                 }
                             })),
+                            barWidth: sm ? 12 : (mob ? 14 : 18),
                             markLine: {
                                 data: [
                                     { yAxis: 1, label: { formatter: '超常模1分' }, lineStyle: { color: '#67c23a', type: 'dashed' } },
